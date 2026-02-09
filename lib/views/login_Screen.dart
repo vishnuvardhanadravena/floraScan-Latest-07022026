@@ -1,4 +1,7 @@
+import 'package:aiplantidentifier/core/app_settings.dart';
 import 'package:aiplantidentifier/utils/helper_methodes.dart';
+import 'package:aiplantidentifier/views/forgot_pass.dart';
+import 'package:aiplantidentifier/views/mainscrens/mainscreen.dart';
 import 'package:flutter/material.dart';
 
 class LoginPage extends StatelessWidget {
@@ -224,6 +227,13 @@ class _LoginMobileViewState extends State<LoginMobileView> {
                                   alignment: Alignment.centerRight,
                                   child: TextButton(
                                     onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder:
+                                              (context) => ForgotPasswordPage(),
+                                        ),
+                                      );
                                       printGreen("clicked on forgot password");
                                     },
                                     style: TextButton.styleFrom(
@@ -245,7 +255,18 @@ class _LoginMobileViewState extends State<LoginMobileView> {
                                 SizedBox(
                                   width: double.infinity,
                                   child: ElevatedButton(
-                                    onPressed: () {
+                                    onPressed: () async {
+                                      await AppSettings.saveData(
+                                        'USER_ISLOGIN',
+                                        true,
+                                        SharedPreferenceIOType.BOOL,
+                                      );
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => MainScreen(),
+                                        ),
+                                      );
                                       printGreen("clicke on the login");
                                     },
                                     style: ElevatedButton.styleFrom(
@@ -514,6 +535,14 @@ class _LoginTabletViewState extends State<LoginTabletView> {
                                   alignment: Alignment.centerRight,
                                   child: TextButton(
                                     onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder:
+                                              (context) => ForgotPasswordPage(),
+                                        ),
+                                      );
+                                      // ForgotPasswordPage
                                       // Handle forgot password
                                     },
                                     style: TextButton.styleFrom(
@@ -537,6 +566,12 @@ class _LoginTabletViewState extends State<LoginTabletView> {
                                   width: double.infinity,
                                   child: ElevatedButton(
                                     onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => MainScreen(),
+                                        ),
+                                      );
                                       // Handle login
                                     },
                                     style: ElevatedButton.styleFrom(

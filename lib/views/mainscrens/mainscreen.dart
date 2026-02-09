@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:aiplantidentifier/utils/app_colors.dart';
 
-import '../plant_history_Screens/plant_history.dart';
+import '../history/plant_history.dart';
 import '../plantidentification/plant.dart';
 import '../progress/growth_screen.dart';
 import '../plantscareroutine/careroutine.dart';

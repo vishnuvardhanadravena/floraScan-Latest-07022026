@@ -1,26 +1,37 @@
+import 'package:aiplantidentifier/core/app_settings.dart';
 import 'package:aiplantidentifier/providers/analyze.dart';
+import 'package:aiplantidentifier/providers/auth_provider.dart';
 import 'package:aiplantidentifier/utils/helper_methodes.dart';
 import 'package:aiplantidentifier/utils/responsivehelper.dart';
 import 'package:aiplantidentifier/utils/theame_data.dart';
 import 'package:aiplantidentifier/providers/dairy_provider.dart';
 import 'package:aiplantidentifier/views/splashscreen/splash.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // await DatabaseHelper.instance.deleteAllAppData();
   GoogleFonts.config.allowRuntimeFetching = false;
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => PlantIdentificationProvider()),
-        ChangeNotifierProvider(create: (_) => PlantProvider()),
-      ],
-      child: const MyApp(),
-    ),
-  );
+  AppSettings.initializeAppInfoInstance();
+  await AppSettings.appInfo!.updateLocalVariablesWithSharedPreference();
+
+  await AppSettings.loadAppDataToRunTimeVariables();
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]).then((
+    _,
+  ) {
+    runApp(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => PlantIdentificationProvider()),
+          ChangeNotifierProvider(create: (_) => PlantProvider()),
+          ChangeNotifierProvider(create: (_) => ForgotPasswordProvider()),
+        ],
+        child: const MyApp(),
+      ),
+    );
+  });
 }
 
 class MyApp extends StatelessWidget {

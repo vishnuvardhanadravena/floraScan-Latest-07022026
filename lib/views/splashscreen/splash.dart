@@ -1,4 +1,6 @@
+import 'package:aiplantidentifier/core/app_settings.dart';
 import 'package:aiplantidentifier/database/database.dart';
+import 'package:aiplantidentifier/views/mainscrens/mainscreen.dart';
 import 'package:aiplantidentifier/views/onbaording/onbaording.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -61,10 +63,20 @@ class _SplashScreenState extends State<SplashScreen>
     await DatabaseHelper.instance.deleteAllData();
   }
 
-  void _goToOnboarding() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+  Future<void> _goToOnboarding() async {
+    final login = await AppSettings.getData(
+      'USER_ISLOGIN',
+      SharedPreferenceIOType.BOOL,
     );
+    if (login) {
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const MainScreen()));
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+      );
+    }
   }
 
   @override
