@@ -1,7 +1,8 @@
 import 'dart:convert';
 
+import 'package:aiplantidentifier/models/plant_growth.dart';
+import 'package:aiplantidentifier/models/plant_inlight.dart';
 import 'package:aiplantidentifier/utils/app_colors.dart';
-import 'package:aiplantidentifier/views/progress/growth_screen.dart';
 import 'package:aiplantidentifier/views/progress/plant_inlights.dart';
 import 'package:aiplantidentifier/views/progress/plant_progress.dart';
 import 'package:flutter/material.dart';

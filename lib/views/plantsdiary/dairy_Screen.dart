@@ -11,7 +11,7 @@ import 'package:aiplantidentifier/utils/custum_buttons.dart';
 import 'package:aiplantidentifier/utils/loader.dart';
 import 'package:aiplantidentifier/views/custom_dropdown.dart';
 import 'package:aiplantidentifier/views/plantidentification/plant.dart';
-import 'package:aiplantidentifier/views/plantsdiary/dairy_plant_model.dart';
+import 'package:aiplantidentifier/models/dairy_plant_model.dart';
 import 'package:aiplantidentifier/providers/dairy_provider.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/foundation.dart';

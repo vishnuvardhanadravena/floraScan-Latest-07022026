@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:aiplantidentifier/utils/loader.dart';
-import 'package:aiplantidentifier/views/history/plant_Indentification_history_detailes.dart';
+import 'package:aiplantidentifier/views/plant_history_Screens/plant_Indentification_history_detailes.dart';
 import 'package:aiplantidentifier/views/progress/growth_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';

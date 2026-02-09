@@ -1,6 +1,6 @@
 import 'package:aiplantidentifier/utils/app_Toast.dart';
 import 'package:aiplantidentifier/views/plantsdiary/dairy_Screen.dart';
-import 'package:aiplantidentifier/views/plantsdiary/dairy_plant_model.dart';
+import 'package:aiplantidentifier/models/dairy_plant_model.dart';
 import 'package:aiplantidentifier/providers/dairy_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

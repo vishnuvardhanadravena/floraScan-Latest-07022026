@@ -14,7 +14,7 @@ class PlantHealthDashboardScreen extends StatelessWidget {
 
   // Updated UI Theme Colors & Styles for Plant App
   static const Color _scaffoldBackgroundColor = Color(0xFFF8F9FA);
-  static const Color _appBarBackgroundColor = Colors.white;
+  // static const Color _appBarBackgroundColor = Colors.white;
   static const Color _primaryColor = Color(0xFF4CAF50); // Green
   static const Color _accentColor = Color(0xFF2E7D32); // Dark Green
   static const Color _cardBackgroundColor = Colors.white;

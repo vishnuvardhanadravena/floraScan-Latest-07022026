@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 
+import 'package:aiplantidentifier/models/plant_growth.dart';
 import 'package:aiplantidentifier/utils/app_colors.dart';
+import 'package:aiplantidentifier/utils/helper_methodes.dart';
 import 'package:aiplantidentifier/utils/loader.dart';
 import 'package:aiplantidentifier/utils/sarech_bar.dart';
 import 'package:aiplantidentifier/views/progress/growth_detalies_Screen.dart';
@@ -11,25 +13,7 @@ import 'package:intl/intl.dart';
 import '../../database/database.dart';
 import '../../providers/analyze.dart';
 
-class PlantGroewth {
-  final String id;
-  final String name;
-  final String status;
-  final String stage;
-  final String imagePath;
-  final String data;
-  final DateTime lastUpdate;
 
-  PlantGroewth({
-    required this.id,
-    required this.name,
-    required this.status,
-    required this.stage,
-    required this.imagePath,
-    required this.data,
-    required this.lastUpdate,
-  });
-}
 
 class GrowthScreen extends StatefulWidget {
   const GrowthScreen({super.key});
@@ -173,7 +157,7 @@ class _GrowthScreenState extends State<GrowthScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: filteredPlants.length,
                     itemBuilder: (context, index) {
-                      print(
+                      printGreen(
                         'Building plant card for: ${filteredPlants[index].data}',
                       );
                       return _buildPlantCard(filteredPlants[index]);

@@ -3,9 +3,8 @@ import 'package:aiplantidentifier/utils/loader.dart';
 import 'package:aiplantidentifier/utils/sarech_bar.dart';
 import 'package:aiplantidentifier/views/plantsdiary/dairy_Screen.dart';
 import 'package:aiplantidentifier/views/plantsdiary/dairy_detailes_Screen.dart';
-import 'package:aiplantidentifier/views/plantsdiary/dairy_plant_model.dart';
+import 'package:aiplantidentifier/models/dairy_plant_model.dart';
 import 'package:aiplantidentifier/providers/dairy_provider.dart';
-import 'package:aiplantidentifier/views/progress/growth_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:typed_data';
@@ -72,10 +71,7 @@ class _PlantListScreenState extends State<PlantListScreen> {
             child: SafeArea(
               child: Column(
                 children: [
-                  // Search Bar
                   _buildSearchBar(context, isTablet),
-
-                  // Plants List
                   Expanded(
                     child: Consumer<PlantProvider>(
                       builder: (context, provider, _) {

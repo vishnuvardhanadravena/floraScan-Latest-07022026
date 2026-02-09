@@ -1,4 +1,5 @@
 import 'package:aiplantidentifier/providers/analyze.dart';
+import 'package:aiplantidentifier/utils/helper_methodes.dart';
 import 'package:aiplantidentifier/utils/responsivehelper.dart';
 import 'package:aiplantidentifier/utils/theame_data.dart';
 import 'package:aiplantidentifier/providers/dairy_provider.dart';
@@ -44,7 +45,7 @@ class RoutineRefreshNotifier {
 
   static void refresh() {
     notifier.value++;
-    debugPrint('🔄 Routine refresh triggered');
+    printGreen('🔄 Routine refresh triggered');
   }
 }
 
@@ -183,7 +184,6 @@ class ExampleScreen4 extends StatelessWidget {
   const ExampleScreen4({super.key});
 
   void _showResponsiveDialog(BuildContext context) {
-    final spacing = context.spacing;
     final typography = context.typography;
     final buttonSize = context.buttonSize;
 
@@ -225,7 +225,7 @@ class ExampleScreen4 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final spacing = context.spacing;
+    // final spacing = context.spacing;
     final typography = context.typography;
     final buttonSize = context.buttonSize;
 
@@ -250,7 +250,6 @@ class ExampleScreen4 extends StatelessWidget {
   }
 }
 
-/// EXAMPLE 5: Responsive Card Component
 class ResponsiveCard extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -474,7 +473,7 @@ class ResponsiveConditionalExample extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final spacing = context.spacing;
+    // final spacing = context.spacing;
     final typography = context.typography;
 
     // Check screen type
@@ -580,8 +579,8 @@ class _ResponsiveAppExampleState extends State<ResponsiveAppExample> {
 
   @override
   Widget build(BuildContext context) {
-    final spacing = context.spacing;
-    final typography = context.typography;
+    // final spacing = context.spacing;
+    // final typography = context.typography;
 
     final screens = [
       ExampleScreen1(),

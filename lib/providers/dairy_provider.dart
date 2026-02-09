@@ -1,6 +1,6 @@
 import 'package:aiplantidentifier/database/database.dart';
 import 'package:flutter/material.dart';
-import '../views/plantsdiary/dairy_plant_model.dart';
+import '../models/dairy_plant_model.dart';
 
 class PlantProvider extends ChangeNotifier {
   List<DairyPlantModel> _plants = [];

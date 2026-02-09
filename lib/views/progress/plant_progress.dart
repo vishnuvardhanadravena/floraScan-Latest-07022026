@@ -1,5 +1,6 @@
+import 'package:aiplantidentifier/models/plant_growth.dart';
+import 'package:aiplantidentifier/models/progress_data.dart';
 import 'package:aiplantidentifier/utils/loader.dart';
-import 'package:aiplantidentifier/views/progress/growth_screen.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
@@ -15,7 +16,7 @@ class PlantProgressTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final progress = _ProgressData.fromJson(growthProgressJson);
+    final progress = ProgressData.fromJson(growthProgressJson);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -78,7 +79,7 @@ class PlantProgressTab extends StatelessWidget {
     );
   }
 
-  Widget _progressCard(BuildContext context, _ProgressData p) {
+  Widget _progressCard(BuildContext context, ProgressData p) {
     final progressValue = (p.daysTracked / 150).clamp(0.0, 1.0);
 
     return LayoutBuilder(
@@ -155,7 +156,7 @@ class PlantProgressTab extends StatelessWidget {
     );
   }
 
-  Widget _timelineEntry(_TimelineEntry e) {
+  Widget _timelineEntry(TimelineEntry e) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
@@ -199,7 +200,7 @@ class PlantProgressTab extends StatelessWidget {
     );
   }
 
-  Widget _growthChart(_ChartData chart) {
+  Widget _growthChart(ChartData chart) {
     if (chart.heightSpots.isEmpty || chart.leafSpots.isEmpty) {
       return Container(
         height: 200,
@@ -287,84 +288,4 @@ class PlantProgressTab extends StatelessWidget {
       ),
     );
   }
-}
-
-class _ProgressData {
-  final String overallStatus;
-  final int daysTracked;
-  final List<_TimelineEntry> timeline;
-  final _ChartData chart;
-
-  _ProgressData({
-    required this.overallStatus,
-    required this.daysTracked,
-    required this.timeline,
-    required this.chart,
-  });
-
-  factory _ProgressData.fromJson(Map<String, dynamic> json) {
-    return _ProgressData(
-      overallStatus: json['overall_status'] ?? '',
-      daysTracked: json['days_tracked'] ?? 0,
-      timeline:
-          (json['timeline'] as List? ?? [])
-              .map((e) => _TimelineEntry.fromJson(e))
-              .toList(),
-      chart: _ChartData.fromJson(json['chart'] ?? {}),
-    );
-  }
-}
-
-class _TimelineEntry {
-  final String date;
-  final String title;
-  final String status;
-
-  _TimelineEntry({
-    required this.date,
-    required this.title,
-    required this.status,
-  });
-
-  factory _TimelineEntry.fromJson(Map<String, dynamic> json) {
-    return _TimelineEntry(
-      date: json['date'] ?? '',
-      title: json['title'] ?? '',
-      status: json['status'] ?? '',
-    );
-  }
-}
-
-class _ChartData {
-  final List<String> labels;
-  final List<double> heights;
-  final List<double> leaves;
-
-  _ChartData({
-    required this.labels,
-    required this.heights,
-    required this.leaves,
-  });
-
-  factory _ChartData.fromJson(Map<String, dynamic> json) {
-    return _ChartData(
-      labels: List<String>.from(json['labels'] ?? []),
-
-      heights:
-          (json['height'] as List? ?? [])
-              .map((e) => double.tryParse(e.toString()) ?? 0.0)
-              .toList(),
-
-      leaves:
-          (json['leaves'] as List? ?? [])
-              .map((e) => double.tryParse(e.toString()) ?? 0.0)
-              .toList(),
-    );
-  }
-
-  List<FlSpot> get heightSpots =>
-      List.generate(heights.length, (i) => FlSpot(i.toDouble(), heights[i]));
-
-  List<FlSpot> get leafSpots =>
-      List.generate(leaves.length, (i) => FlSpot(i.toDouble(), leaves[i]));
 }

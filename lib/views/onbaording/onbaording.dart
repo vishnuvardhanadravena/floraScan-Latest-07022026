@@ -1,3 +1,4 @@
+import 'package:aiplantidentifier/views/login_Screen.dart';
 import 'package:aiplantidentifier/views/mainscrens/mainscreen.dart';
 import 'package:flutter/material.dart';
 
@@ -50,7 +51,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _onSkip() {
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (_) => const MainScreen()),
+      // MaterialPageRoute(builder: (_) => const MainScreen()),
+      MaterialPageRoute(builder: (_) => const LoginPage()),
       (route) => false,
     );
   }

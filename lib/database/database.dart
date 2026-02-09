@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:aiplantidentifier/main.dart';
+import 'package:aiplantidentifier/models/routineplant_model.dart';
+import 'package:aiplantidentifier/utils/helper_methodes.dart';
 import 'package:aiplantidentifier/views/plantscareroutine/careroutine.dart';
-import 'package:aiplantidentifier/views/plantsdiary/dairy_plant_model.dart';
+import 'package:aiplantidentifier/models/dairy_plant_model.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -21,7 +23,7 @@ class DatabaseHelper {
 
   DatabaseHelper._privateConstructor();
   static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
-
+  static MySqlConnection? _connection;
   static final _settings = ConnectionSettings(
     host: '193.203.184.8',
     port: 3306,
@@ -29,17 +31,37 @@ class DatabaseHelper {
     password: 'Bstore@9652',
     db: 'u679077773_flora_plants',
   );
+  static Future<MySqlConnection> _getConnection() async {
+    if (_connection == null) {
+      _connection = await MySqlConnection.connect(_settings);
+      printGreen('✅ MySQL connected (new)');
+      return _connection!;
+    }
+    try {
+      await _connection!.query('SELECT 1');
+      return _connection!;
+    } catch (e) {
+      printRed('🔄 MySQL connection lost, reconnecting...');
+      try {
+        await _connection!.close();
+      } catch (_) {}
+      _connection = await MySqlConnection.connect(_settings);
+      return _connection!;
+    }
+  }
 
-  Future<MySqlConnection> _getConnection() async {
-    return await MySqlConnection.connect(_settings);
+  static Future<void> close() async {
+    if (_connection != null) {
+      await _connection!.close();
+      _connection = null;
+      printRed('❌ MySQL connection closed');
+    }
   }
 
   Future<int> insertIdentification(Map<String, dynamic> row) async {
     final conn = await _getConnection();
-
     try {
       final imageBytes = row[columnImagePath];
-
       Uint8List actualBytes;
       if (imageBytes is Uint8List) {
         actualBytes = imageBytes;
@@ -52,13 +74,10 @@ class DatabaseHelper {
           'Invalid image data type: ${imageBytes.runtimeType}',
         );
       }
-
       final base64Image = base64Encode(actualBytes);
-
-      debugPrint(
+      printGreen(
         '💾 Storing image as Base64 (${actualBytes.length} bytes → ${base64Image.length} chars)',
       );
-
       final result = await conn.query(
         '''
         INSERT INTO $table
@@ -68,25 +87,23 @@ class DatabaseHelper {
         ''',
         [
           row[columnName],
-          base64Image, // ✅ Store as Base64 string instead of binary
+          base64Image,
           row[columnResult],
           row[columnTimestamp],
           row[columnPlantType],
           row[columnHealthStatus],
         ],
       );
-
-      debugPrint('✅ Image stored successfully with ID: ${result.insertId}');
+      printGreen('✅ Image stored successfully with ID: ${result.insertId}');
       RoutineRefreshNotifier.refresh();
       return result.insertId!;
     } finally {
-      await conn.close();
+      // await conn.close();
     }
   }
 
   Future<List<Map<String, dynamic>>> getAllIdentifications() async {
     final conn = await _getConnection();
-
     try {
       final results = await conn.query('''
         SELECT $columnId, $columnName, $columnResult,
@@ -94,79 +111,63 @@ class DatabaseHelper {
         FROM $table
         ORDER BY $columnTimestamp DESC
       ''');
-
       final List<Map<String, dynamic>> data = [];
-
       for (final row in results) {
         final map = Map<String, dynamic>.from(row.fields);
-
         final value = map[columnResult];
         if (value is Blob) {
           map[columnResult] = String.fromCharCodes(value.toBytes());
         }
-
         data.add(map);
       }
-
       return data;
     } finally {
-      await conn.close();
+      // await conn.close();
     }
   }
 
   Future<Uint8List?> getIdentificationImage(int id) async {
     debugPrint('📥 Fetching image for ID: $id');
-
     final conn = await _getConnection();
-
     try {
       final results = await conn.query(
         'SELECT $columnImagePath FROM $table WHERE $columnId = ? LIMIT 1',
         [id],
       );
-
       if (results.isEmpty) {
-        debugPrint('❌ No image found for ID: $id');
+        printRed('❌ No image found for ID: $id');
         return null;
       }
-
       final value = results.first[columnImagePath];
-
       if (value == null) {
-        debugPrint('❌ Image data is NULL for ID: $id');
+        printRed('❌ Image data is NULL for ID: $id');
         return null;
       }
-
       try {
         String base64String;
-
         if (value is String) {
           base64String = value;
         } else if (value is Blob) {
           base64String = String.fromCharCodes(value.toBytes());
         } else {
-          debugPrint('❌ Unexpected type: ${value.runtimeType}');
+          printRed('❌ Unexpected type: ${value.runtimeType}');
           return null;
         }
-
         final imageBytes = base64Decode(base64String);
-
         debugPrint('✅ Decoded image: ${imageBytes.length} bytes');
         _debugImageHeader(imageBytes, id);
-
         return imageBytes;
       } catch (e) {
-        debugPrint('❌ Base64 decode error for ID $id: $e');
+        printRed('❌ Base64 decode error for ID $id: $e');
         return null;
       }
     } finally {
-      await conn.close();
+      // await conn.close();
     }
   }
 
   Future<void> deleteAllAppData() async {
     final conn = await _getConnection();
-
     const tag = '[DB_CLEAR]';
 
     Future<void> safeDelete(String table) async {
@@ -192,7 +193,7 @@ class DatabaseHelper {
         }
       } catch (e) {
         // VERY IMPORTANT: do NOT throw
-        debugPrint(
+        printRed(
           '$tag ⚠️ Skipped $table (reason: ${e.toString().split('\n').first})',
         );
       }
@@ -213,18 +214,18 @@ class DatabaseHelper {
 
       debugPrint('$tag 🎉 DATABASE CLEANUP COMPLETED');
     } catch (e, stack) {
-      debugPrint('$tag ❌ Unexpected error');
-      debugPrint('$tag Error: $e');
-      debugPrint(stack.toString().split('\n').first);
+      printRed('$tag ❌ Unexpected error');
+      printRed('$tag Error: $e');
+      printRed(stack.toString().split('\n').first);
     } finally {
-      await conn.close();
+      // await conn.close();
       debugPrint('$tag 🔌 Database connection closed');
     }
   }
 
   void _debugImageHeader(Uint8List bytes, int id) {
     if (bytes.isEmpty) {
-      debugPrint('❌ Empty image data for ID: $id');
+      printRed('❌ Empty image data for ID: $id');
       return;
     }
 
@@ -238,11 +239,11 @@ class DatabaseHelper {
 
     if (bytes.length >= 2) {
       if (bytes[0] == 0xFF && bytes[1] == 0xD8) {
-        debugPrint('✅ Valid JPEG detected');
+        printGreen('✅ Valid JPEG detected');
       } else if (bytes[0] == 0x89 && bytes[1] == 0x50) {
-        debugPrint('✅ Valid PNG detected');
+        printGreen('✅ Valid PNG detected');
       } else {
-        debugPrint('⚠️ Unknown image format');
+        printGreen('⚠️ Unknown image format');
       }
     }
   }
@@ -256,7 +257,7 @@ class DatabaseHelper {
       );
       return result.affectedRows ?? 0;
     } finally {
-      await conn.close();
+      // await conn.close();
     }
   }
 
@@ -266,14 +267,13 @@ class DatabaseHelper {
       await conn.query('DELETE FROM $table');
       debugPrint('🗑️ All identifications deleted');
     } finally {
-      await conn.close();
+      // await conn.close();
     }
   }
 
   Future<void> _ensureCareTasksSchema() async {
     final conn = await _getConnection();
     try {
-      // 1️⃣ Ensure table exists
       await conn.query('''
     CREATE TABLE IF NOT EXISTS care_tasks (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -300,7 +300,7 @@ class DatabaseHelper {
       ''');
       }
     } finally {
-      await conn.close();
+      // await conn.close();
     }
   }
 
@@ -331,7 +331,7 @@ class DatabaseHelper {
         ],
       );
     } finally {
-      await conn.close();
+      // await conn.close();
     }
   }
 
@@ -362,7 +362,7 @@ class DatabaseHelper {
 
       return rows;
     } finally {
-      await conn.close();
+      // await conn.close();
     }
   }
 
@@ -374,7 +374,7 @@ class DatabaseHelper {
         [enabled ? 1 : 0, plantId],
       );
     } finally {
-      await conn.close();
+      // await conn.close();
     }
   }
 
@@ -405,7 +405,7 @@ class DatabaseHelper {
         [now.toIso8601String(), nextRun.toIso8601String(), taskId],
       );
     } finally {
-      await conn.close();
+      // await conn.close();
     }
   }
 
@@ -535,7 +535,7 @@ class DatabaseHelper {
       debugPrint('🔥 Stack: $stack');
       rethrow;
     } finally {
-      await conn.close();
+      // await conn.close();
       debugPrint('🔴 MySQL connection closed');
     }
   }
@@ -1121,7 +1121,7 @@ class DatabaseHelper {
       // This should almost never happen now
       debugPrint('❌ [DB_CLEAR] Unexpected fatal error: $e');
     } finally {
-      await conn.close();
+      // await conn.close();
       debugPrint('🔌 [DB_CLEAR] Database connection closed');
     }
   }
