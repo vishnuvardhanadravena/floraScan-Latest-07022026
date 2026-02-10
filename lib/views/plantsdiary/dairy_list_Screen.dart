@@ -1,6 +1,7 @@
 import 'package:aiplantidentifier/utils/app_Toast.dart';
 import 'package:aiplantidentifier/utils/loader.dart';
 import 'package:aiplantidentifier/utils/sarech_bar.dart';
+import 'package:aiplantidentifier/views/mainscrens/mainscreen.dart';
 import 'package:aiplantidentifier/views/plantsdiary/dairy_Screen.dart';
 import 'package:aiplantidentifier/views/plantsdiary/dairy_detailes_Screen.dart';
 import 'package:aiplantidentifier/models/dairy_plant_model.dart';
@@ -62,6 +63,7 @@ class _PlantListScreenState extends State<PlantListScreen> {
         final isLargeTablet = screenWidth > 1200;
 
         return Scaffold(
+   drawer: AnimatedAppDrawer(rootContext: context),
           appBar: _buildAppBar(context, isTablet),
           backgroundColor: Colors.white,
           body: RefreshIndicator(

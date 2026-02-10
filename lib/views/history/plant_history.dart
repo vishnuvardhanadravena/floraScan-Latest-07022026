@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:aiplantidentifier/utils/loader.dart';
 import 'package:aiplantidentifier/views/history/plant_Indentification_history_detailes.dart';
-import 'package:aiplantidentifier/views/progress/growth_screen.dart';
+import 'package:aiplantidentifier/views/mainscrens/mainscreen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -65,6 +65,7 @@ class _PlantHistoryScreenState extends State<PlantHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: AnimatedAppDrawer(rootContext: context),
       backgroundColor: const Color(0xFFF6F7F8),
       appBar: AppBar(
         title: const Text(

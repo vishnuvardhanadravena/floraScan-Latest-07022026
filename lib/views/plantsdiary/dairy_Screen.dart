@@ -1,14 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
-import 'dart:typed_data';
 
 import 'package:aiplantidentifier/core/config.dart';
 import 'package:aiplantidentifier/utils/app_Toast.dart';
 import 'package:aiplantidentifier/utils/app_colors.dart';
 import 'package:aiplantidentifier/utils/custum_buttons.dart';
-import 'package:aiplantidentifier/utils/loader.dart';
 import 'package:aiplantidentifier/views/custom_dropdown.dart';
 import 'package:aiplantidentifier/views/plantidentification/plant.dart';
 import 'package:aiplantidentifier/models/dairy_plant_model.dart';

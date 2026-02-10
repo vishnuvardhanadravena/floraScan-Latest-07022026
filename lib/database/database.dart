@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:aiplantidentifier/main.dart';
 import 'package:aiplantidentifier/models/routineplant_model.dart';
 import 'package:aiplantidentifier/utils/helper_methodes.dart';
-import 'package:aiplantidentifier/views/plantscareroutine/careroutine.dart';
 import 'package:aiplantidentifier/models/dairy_plant_model.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';

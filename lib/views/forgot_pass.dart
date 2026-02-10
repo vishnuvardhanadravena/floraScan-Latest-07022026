@@ -21,7 +21,7 @@ class ForgotPasswordPage extends StatelessWidget {
 }
 
 class ForgotPasswordMobileView extends StatefulWidget {
-  const ForgotPasswordMobileView({Key? key}) : super(key: key);
+  const ForgotPasswordMobileView({super.key});
 
   @override
   State<ForgotPasswordMobileView> createState() =>
@@ -841,7 +841,7 @@ class _ForgotPasswordMobileViewState extends State<ForgotPasswordMobileView> {
 }
 
 class ForgotPasswordTabletView extends StatefulWidget {
-  const ForgotPasswordTabletView({Key? key}) : super(key: key);
+  const ForgotPasswordTabletView({super.key});
 
   @override
   State<ForgotPasswordTabletView> createState() =>

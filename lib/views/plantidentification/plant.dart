@@ -1733,10 +1733,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:aiplantidentifier/core/config.dart';
 import 'package:aiplantidentifier/utils/app_Toast.dart';
 import 'package:aiplantidentifier/utils/app_colors.dart';
+import 'package:aiplantidentifier/views/mainscrens/mainscreen.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -1755,6 +1755,7 @@ class PlantIdentificationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: AnimatedAppDrawer(rootContext: context),
       backgroundColor: _scaffoldBackgroundColor,
       appBar: AppBar(
         elevation: 0,

@@ -6,6 +6,7 @@ import 'package:aiplantidentifier/models/routineplant_model.dart';
 import 'package:aiplantidentifier/utils/app_colors.dart';
 import 'package:aiplantidentifier/utils/loader.dart';
 import 'package:aiplantidentifier/utils/sarech_bar.dart';
+import 'package:aiplantidentifier/views/mainscrens/mainscreen.dart';
 import 'package:flutter/material.dart';
 
 
@@ -87,6 +88,7 @@ class _RoutineScreenState extends State<RoutineScreen> with RouteAware {
     final width = MediaQuery.of(context).size.width;
 
     return Scaffold(
+      drawer: AnimatedAppDrawer(rootContext: context),
       backgroundColor: Colors.white,
       appBar: AppBar(title: const Text('Routine')),
       body: Column(

@@ -5,6 +5,7 @@ import 'package:aiplantidentifier/utils/helper_methodes.dart';
 import 'package:aiplantidentifier/utils/responsivehelper.dart';
 import 'package:aiplantidentifier/utils/theame_data.dart';
 import 'package:aiplantidentifier/providers/dairy_provider.dart';
+import 'package:aiplantidentifier/views/drwer.dart';
 import 'package:aiplantidentifier/views/splashscreen/splash.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,6 +19,7 @@ Future<void> main() async {
   await AppSettings.appInfo!.updateLocalVariablesWithSharedPreference();
 
   await AppSettings.loadAppDataToRunTimeVariables();
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]).then((
     _,
   ) {
@@ -28,11 +30,13 @@ Future<void> main() async {
           ChangeNotifierProvider(create: (_) => PlantProvider()),
           ChangeNotifierProvider(create: (_) => ForgotPasswordProvider()),
         ],
-        child: const MyApp(),
+        child: MyApp(),
       ),
     );
   });
 }
+
+final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -40,6 +44,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: appNavigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'spiffy',
       theme: AppTheme.lightTheme(context),

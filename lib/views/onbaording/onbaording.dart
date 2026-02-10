@@ -1130,7 +1130,7 @@ class _ScannerFrameState extends State<ScannerFrame>
     final double lineHeight = isTablet ? 8 : 6;
 
     return Center(
-      child: Container(
+      child: SizedBox(
         width: frameWidth,
         height: frameHeight,
 
