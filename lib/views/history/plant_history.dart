@@ -65,8 +65,9 @@ class _PlantHistoryScreenState extends State<PlantHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: AnimatedAppDrawer(rootContext: context),
-      backgroundColor: const Color(0xFFF6F7F8),
+      // drawer: AnimatedAppDrawer(rootContext: context),
+      drawer: TelegramStyleDrawer(rootContext: context,),
+      backgroundColor: const Color.fromARGB(205, 255, 255, 255),
       appBar: AppBar(
         title: const Text(
           'Identification History',

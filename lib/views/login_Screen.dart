@@ -1,9 +1,11 @@
 import 'package:aiplantidentifier/core/app_settings.dart';
 import 'package:aiplantidentifier/providers/auth_provider.dart';
+import 'package:aiplantidentifier/utils/app_Toast.dart';
 import 'package:aiplantidentifier/utils/helper_methodes.dart';
 import 'package:aiplantidentifier/views/forgot_pass.dart';
 import 'package:aiplantidentifier/views/mainscrens/mainscreen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:provider/provider.dart';
 
 class LoginPage extends StatelessWidget {
@@ -13,7 +15,7 @@ class LoginPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 600;
 
-    return isMobile ? const LoginMobileView() : const LoginTabletView();
+    return isMobile ? const LoginMobileView() : const LoginMobileView();
   }
 }
 
@@ -28,12 +30,14 @@ class _LoginMobileViewState extends State<LoginMobileView> {
   late TextEditingController emailController;
   late TextEditingController passwordController;
   bool obscurePassword = true;
+  // late ForgotPasswordProvider provider;
 
   @override
   void initState() {
     super.initState();
     emailController = TextEditingController();
     passwordController = TextEditingController();
+    // provider = Provider.of<ForgotPasswordProvider>(context);
   }
 
   @override
@@ -41,6 +45,38 @@ class _LoginMobileViewState extends State<LoginMobileView> {
     emailController.dispose();
     passwordController.dispose();
     super.dispose();
+  }
+
+  _handlelogin(
+    String username,
+    String password,
+    ForgotPasswordProvider provider,
+  ) async {
+    try {
+      await provider.login(username, password);
+      if (provider.authResult?.success == true) {
+        AppToast.success(provider.authResult!.message.toString());
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => MainScreen()),
+          (_) => false,
+        );
+      } else {
+        if (mounted) {
+          showErrorToast(
+            context,
+            message:
+                provider.authResult?.message.toString() ??
+                "some thing went worng please try after some time",
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        showErrorToast(context, message: e.toString());
+      }
+      AppToast.error(e.toString());
+    }
   }
 
   @override
@@ -245,46 +281,56 @@ class _LoginMobileViewState extends State<LoginMobileView> {
                                       ),
                                     ),
                                     const SizedBox(height: 12),
-                                    Align(
-                                      alignment: Alignment.centerRight,
-                                      child: TextButton(
-                                        onPressed: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder:
-                                                  (context) =>
-                                                      ForgotPasswordPage(),
-                                            ),
-                                          );
-                                          printGreen(
-                                            "clicked on forgot password",
-                                          );
-                                        },
-                                        style: TextButton.styleFrom(
-                                          padding: EdgeInsets.zero,
-                                          minimumSize: const Size(0, 0),
-                                          tapTargetSize:
-                                              MaterialTapTargetSize.shrinkWrap,
-                                        ),
-                                        child: const Text(
-                                          'Forgot the password ?',
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            color: Colors.black54,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
+                                    // Align(
+                                    //   alignment: Alignment.centerRight,
+                                    //   child: TextButton(
+                                    //     onPressed: () {
+                                    //       Navigator.push(
+                                    //         context,
+                                    //         MaterialPageRoute(
+                                    //           builder:
+                                    //               (context) =>
+                                    //                   ForgotPasswordPage(
+                                    //                     username:
+                                    //                         emailController
+                                    //                             .text,
+                                    //                   ),
+                                    //         ),
+                                    //       );
+                                    //       printGreen(
+                                    //         "clicked on forgot password",
+                                    //       );
+                                    //     },
+                                    //     style: TextButton.styleFrom(
+                                    //       padding: EdgeInsets.zero,
+                                    //       minimumSize: const Size(0, 0),
+                                    //       tapTargetSize:
+                                    //           MaterialTapTargetSize.shrinkWrap,
+                                    //     ),
+                                    //     child: const Text(
+                                    //       'Forgot the password ?',
+                                    //       style: TextStyle(
+                                    //         fontSize: 13,
+                                    //         color: Colors.black54,
+                                    //       ),
+                                    //     ),
+                                    //   ),
+                                    // ),
                                     const SizedBox(height: 24),
                                     SizedBox(
                                       width: double.infinity,
                                       child: ElevatedButton(
                                         onPressed:
-                                            () => auth.login(
+                                            () => _handlelogin(
                                               emailController.text,
                                               passwordController.text,
+                                              auth,
                                             ),
+
+                                        // => auth.login(
+                                        //   emailController.text,
+                                        //   passwordController.text,
+                                        // ),
                                         // onPressed: () async {
                                         //   await AppSettings.saveData(
                                         //     'USER_ISLOGIN',
@@ -602,7 +648,11 @@ class _LoginTabletViewState extends State<LoginTabletView> {
                                             MaterialPageRoute(
                                               builder:
                                                   (context) =>
-                                                      ForgotPasswordPage(),
+                                                      ForgotPasswordPage(
+                                                        username:
+                                                            emailController
+                                                                .text,
+                                                      ),
                                             ),
                                           );
                                           // ForgotPasswordPage

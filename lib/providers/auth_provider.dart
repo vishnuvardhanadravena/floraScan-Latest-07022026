@@ -8,7 +8,7 @@ import 'package:aiplantidentifier/utils/app_Toast.dart';
 class ForgotPasswordProvider extends ChangeNotifier {
   bool isLoading = false;
   String userEmail = '';
-  int currentStep = 0;
+  int currentStep = 2;
   void _setLoading(bool value) {
     isLoading = value;
     notifyListeners();
@@ -137,6 +137,7 @@ class ForgotPasswordProvider extends ChangeNotifier {
     if (email.trim().isEmpty) {
       final result = ApiResult(success: false, message: 'Email is required');
 
+      _setAuthResult(result);
       _setinputerrormsg(result.message);
       _setloginLoading(false);
       return result;
@@ -144,7 +145,9 @@ class ForgotPasswordProvider extends ChangeNotifier {
 
     if (!_isValidEmail(email)) {
       final result = ApiResult(success: false, message: 'Enter a valid email');
+      _setAuthResult(result);
       _setinputerrormsg(result.message);
+
       _setloginLoading(false);
       return result;
     }
@@ -152,6 +155,7 @@ class ForgotPasswordProvider extends ChangeNotifier {
     if (password.isEmpty) {
       final result = ApiResult(success: false, message: 'Password is required');
       _setinputerrormsg(result.message);
+      _setAuthResult(result);
       _setloginLoading(false);
       return result;
     }
@@ -220,11 +224,122 @@ class ForgotPasswordProvider extends ChangeNotifier {
   }
 
   void goBack(BuildContext context) {
-    if (currentStep > 0) {
-      currentStep--;
+    Navigator.pop(context);
+    // if (currentStep > 0) {
+    //   currentStep--;
+    //   notifyListeners();
+    // } else {
+    //   Navigator.pop(context);
+    // }
+  }
+
+  /// State keys (as you requested)
+  bool forgotPassLoading = false;
+  String forgotPassErrorMsg = '';
+
+  /// Reset Password API
+  // Future<bool> resetPassword({
+  //   required BuildContext context,
+  //   required String phoneNumber,
+  //   bool forceReload = false,
+  // }) async {
+  //   forgotPassLoading = true;
+  //   forgotPassErrorMsg = '';
+  //   notifyListeners();
+
+  //   String apiData = '';
+
+  //   try {
+  //     final shouldCallAPI =
+  //         await timeDifferenceInMinutes('FORGOT_PASSWORD') || forceReload;
+
+  //     if (shouldCallAPI) {
+  //       try {
+  //         await AppSettings.callRemotePostAPI(
+  //           urlRef: "FORGOT_PASSWORD",
+  //           url: AppSettings.api['FORGOT_PASSWORD'],
+  //           payload: {"value": phoneNumber},
+  //         );
+
+  //         apiData = await AppSettings.getData(
+  //           'FORGOT_PASSWORD_DATA',
+  //           SharedPreferenceIOType.STRING,
+  //         );
+  //       } catch (e) {
+  //         apiData = 'FAILED';
+  //       }
+  //     }
+
+  //     if (apiData.isEmpty || apiData == 'FAILED') {
+  //       forgotPassErrorMsg = "Something went wrong. Please try again";
+  //       return false;
+  //     }
+
+  //     final decoded = jsonDecode(apiData);
+
+  //     if (decoded["status"] == true) {
+  //       // emailController.text = phoneNumber;
+  //       return true;
+  //     } else {
+  //       forgotPassErrorMsg = decoded["message"] ?? "Invalid request";
+  //       return false;
+  //     }
+  //   } catch (e) {
+  //     forgotPassErrorMsg = "Something went wrong. Please try again";
+  //     return false;
+  //   } finally {
+  //     forgotPassLoading = false;
+  //     notifyListeners();
+  //   }
+  // }
+  bool changePassLoading = false;
+  String changePassErrorMsg = '';
+
+  Future<bool> changePassword({
+    required BuildContext context,
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    changePassLoading = true;
+    changePassErrorMsg = '';
+    notifyListeners();
+
+    try {
+      final response = await AppSettings.callRemotePostAPI(
+        urlRef: "CHANGE_PASSWORD",
+        url: AppSettings.api['CHANGE_PASSWORD'],
+        payload: {"oldpassword": oldPassword, "newpassword": newPassword},
+      );
+
+      if (response == null) {
+        changePassErrorMsg = "Internal Server Error";
+        return false;
+      }
+
+      final decoded = response;
+
+      switch (decoded["statuscode"]) {
+        case 200:
+          return true;
+
+        case 400:
+          changePassErrorMsg = "Password is wrong";
+          return false;
+
+        case 404:
+          changePassErrorMsg = "User not found";
+          return false;
+
+        default:
+          changePassErrorMsg = "Something went wrong";
+          return false;
+      }
+    } catch (e) {
+      changePassErrorMsg = "Internal Server Error";
+      return false;
+    } finally {
+      changePassLoading = false;
       notifyListeners();
-    } else {
-      Navigator.pop(context);
     }
   }
 }

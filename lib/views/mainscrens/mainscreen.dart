@@ -1,13 +1,16 @@
 import 'package:aiplantidentifier/core/app_settings.dart';
 import 'package:aiplantidentifier/main.dart';
+import 'package:aiplantidentifier/providers/profile_provider.dart';
 import 'package:aiplantidentifier/utils/app_Toast.dart';
 import 'package:aiplantidentifier/utils/helper_methodes.dart';
 import 'package:aiplantidentifier/views/aichatbot/aidietcoach.dart';
+import 'package:aiplantidentifier/views/forgot_pass.dart';
 import 'package:aiplantidentifier/views/login_Screen.dart';
 import 'package:aiplantidentifier/views/plantsdiary/dairy_list_Screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:aiplantidentifier/utils/app_colors.dart';
+import 'package:provider/provider.dart';
 
 import '../history/plant_history.dart';
 import '../plantidentification/plant.dart';
@@ -87,8 +90,19 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       canPop: false,
       onPopInvokedWithResult: _handleBack,
       child: Scaffold(
-        backgroundColor: Colors.white,
-        body: _buildBody(),
+        // backgroundColor: Colors.white70,
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset(
+                'images/app_background.png',
+                fit: BoxFit.cover,
+              ),
+            ),
+
+            _buildBody(),
+          ],
+        ),
         floatingActionButton: _buildFAB(),
         floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
         bottomNavigationBar: _buildBottomNav(),
@@ -282,69 +296,291 @@ class _TabConfig {
 }
 
 class _DrawerConfig {
-  static const double headerHeight = 140;
-  static const double borderRadius = 16;
+  static const double headerHeight = 200;
+  static const double borderRadius = 20;
   static const double menuItemHeight = 56;
-
   static const double defaultPadding = 16.0;
-  static const double contentPadding = 20.0;
+  static const double contentPadding = 6.0;
+  static const double animationDuration = 300;
 }
 
 class _DrawerColors {
   static const Color primaryGradientStart = Color(0xFF2D5016);
   static const Color primaryGradientEnd = Color(0xFF4A7C2C);
+
   static const Color accentColor = Color(0xFF2D5016);
   static const Color accentLight = Color(0xFF5FB34F);
-  static const Color hoverBackground = Color(0xFFF0F7E8);
-  static const Color dividerColor = Color(0xFFE0E0E0);
+  static const Color accentExtraLight = Color(0xFFF0F7E8);
+
+  static const Color dividerColor = Color(0xFFE8E8E8);
+  static const Color hoverBackground = Color(0xFFF5F5F5);
+  static const Color textPrimary = Color(0xFF2C2C2C);
+  static const Color textSecondary = Color(0xFF8A8A8A);
+
+  static const Color dangerColor = Color(0xFFFF3B30);
+  static const Color successColor = Color(0xFF34C759);
 }
+
+class _DrawerTypography {
+  static const headerNameStyle = TextStyle(
+    fontSize: 22,
+    fontWeight: FontWeight.w700,
+    color: Colors.white,
+    letterSpacing: -0.5,
+  );
+
+  static const headerEmailStyle = TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w400,
+    color: Color(0xFFE8E8E8),
+    letterSpacing: 0.1,
+  );
+
+  static const menuLabelStyle = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w500,
+    color: _DrawerColors.textPrimary,
+    letterSpacing: 0.2,
+  );
+
+  static const menuLabelSecondaryStyle = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    color: _DrawerColors.textSecondary,
+    letterSpacing: 0.1,
+  );
+
+  static const footerStyle = TextStyle(
+    fontSize: 11,
+    fontWeight: FontWeight.w500,
+    color: _DrawerColors.textSecondary,
+    letterSpacing: 0.2,
+  );
+}
+
+enum MenuItemType { navigation, divider, settings, danger }
 
 class DrawerMenuItem {
   final int index;
   final IconData icon;
   final String label;
+  final String? description;
   final String? routeName;
   final VoidCallback? onTap;
-  final bool isDividerAbove;
+  final MenuItemType type;
+  final bool showBadge;
+  final int? badgeCount;
+  final Widget? trailing;
 
   const DrawerMenuItem({
     required this.index,
     required this.icon,
     required this.label,
+    this.description,
     this.routeName,
     this.onTap,
-    this.isDividerAbove = false,
+    this.type = MenuItemType.navigation,
+    this.showBadge = false,
+    this.badgeCount,
+    this.trailing,
   });
 }
 
-class AnimatedAppDrawer extends StatelessWidget {
-  final BuildContext rootContext;
+class _ProfileAnimationNotifier extends ChangeNotifier {
+  bool _isExpanded = false;
 
-  const AnimatedAppDrawer({super.key, required this.rootContext});
+  bool get isExpanded => _isExpanded;
 
-  void _initializeMenuItems(BuildContext context) {
-    // Menu items initialization
+  void toggle() {
+    _isExpanded = !_isExpanded;
+    notifyListeners();
   }
 
-  Future<void> _handleLogout() async {
-    _showLoadingDialog(rootContext);
+  void reset() {
+    _isExpanded = false;
+    notifyListeners();
+  }
+}
 
-    try {
-      await Future.wait([
-        _logoutLogic(),
-        Future.delayed(const Duration(seconds: 3)),
-      ]);
+class TelegramStyleDrawer extends StatefulWidget {
+  final BuildContext rootContext;
+  final String? userName;
+  final String? userEmail;
+  final String? userPhoneNumber;
+  final String? userAvatarUrl;
+  final VoidCallback? onProfileTap;
+  final VoidCallback? onSettingsTap;
+  final VoidCallback? onLogout;
 
-      // Navigator.of(rootContext, rootNavigator: true).pop();
-      appNavigatorKey.currentState!.popUntil((route) => route.isFirst);
-      appNavigatorKey.currentState!.pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const LoginPage()),
-        (route) => false,
-      );
-    } catch (e) {
-      appNavigatorKey.currentState!.pop();
-      AppToast.error('Logout failed. Please try again.');
-    }
+  const TelegramStyleDrawer({
+    super.key,
+    required this.rootContext,
+    this.userName,
+    this.userEmail,
+    this.userPhoneNumber,
+    this.userAvatarUrl,
+    this.onProfileTap,
+    this.onSettingsTap,
+    this.onLogout,
+  });
+
+  @override
+  State<TelegramStyleDrawer> createState() => _TelegramStyleDrawerState();
+}
+
+class _TelegramStyleDrawerState extends State<TelegramStyleDrawer>
+    with TickerProviderStateMixin {
+  late AnimationController _drawerAnimationController;
+  late AnimationController _itemsAnimationController;
+  late Animation<Offset> _drawerSlideAnimation;
+  late Animation<double> _itemsFadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _drawerAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    _drawerSlideAnimation = Tween<Offset>(
+      begin: const Offset(-1.0, 0.0),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _drawerAnimationController,
+        curve: Curves.easeOut,
+      ),
+    );
+
+    _itemsAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+
+    _itemsFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _itemsAnimationController, curve: Curves.easeOut),
+    );
+
+    _drawerAnimationController.forward();
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) _itemsAnimationController.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _drawerAnimationController.dispose();
+    _itemsAnimationController.dispose();
+    super.dispose();
+  }
+
+  List<DrawerMenuItem> _getMenuItems() {
+    return [
+      // // Main Navigation Section
+      // DrawerMenuItem(
+      //   index: 0,
+      //   icon: Icons.person_rounded,
+      //   label: 'My Profile',
+      //   description: 'View and edit profile',
+      //   onTap: widget.onProfileTap ?? () => Navigator.pop(context),
+      // ),
+      DrawerMenuItem(
+        index: 1,
+        icon: Icons.lock_rounded,
+        label: 'Change Password',
+        description: 'Update your security',
+        routeName: '/change-password',
+        onTap: () {
+          appNavigatorKey.currentState!.popUntil((route) => route.isFirst);
+          appNavigatorKey.currentState!.push(
+            MaterialPageRoute(
+              builder: (_) => ForgotPasswordPage(username: "email"),
+            ),
+          );
+        },
+      ),
+      // DrawerMenuItem(
+      //   index: 2,
+      //   icon: Icons.notifications_rounded,
+      //   label: 'Notifications',
+      //   description: 'Manage alerts',
+      //   showBadge: true,
+      //   badgeCount: 3,
+      //   onTap: () {
+      //     Navigator.pop(context);
+      //     // Your navigation logic
+      //   },
+      // ),
+
+      // // Divider
+      // DrawerMenuItem(
+      //   index: 3,
+      //   icon: Icons.info_rounded,
+      //   label: '',
+      //   type: MenuItemType.divider,
+      // ),
+
+      // // Settings Section
+      // DrawerMenuItem(
+      //   index: 4,
+      //   icon: Icons.settings_rounded,
+      //   label: 'Settings',
+      //   description: 'App preferences',
+      //   type: MenuItemType.settings,
+      //   onTap: widget.onSettingsTap ?? () => Navigator.pop(context),
+      // ),
+      // DrawerMenuItem(
+      //   index: 5,
+      //   icon: Icons.help_rounded,
+      //   label: 'Help & Support',
+      //   description: 'Get help',
+      //   onTap: () {
+      //     Navigator.pop(context);
+      //     // Your navigation logic
+      //   },
+      // ),
+      // DrawerMenuItem(
+      //   index: 6,
+      //   icon: Icons.info_outline_rounded,
+      //   label: 'About App',
+      //   description: 'App information',
+      //   onTap: () {
+      //     Navigator.pop(context);
+      //     // Your navigation logic
+      //   },
+      // ),
+
+      // Divider
+      DrawerMenuItem(
+        index: 7,
+        icon: Icons.logout_rounded,
+        label: '',
+        type: MenuItemType.divider,
+      ),
+
+      // Logout
+      DrawerMenuItem(
+        index: 8,
+        icon: Icons.logout_rounded,
+        label: 'Logout',
+        description: 'Sign out from account',
+        type: MenuItemType.danger,
+        onTap: () => _handleLogout(),
+      ),
+    ];
+  }
+
+  Future<void> _logoutLogic() async {
+    printRed("calling log out.......");
+    await AppSettings.saveData(
+      'USER_ISLOGIN',
+      false,
+      SharedPreferenceIOType.BOOL,
+    );
+
+    await AppSettings.saveData('USER_TOKEN', "", SharedPreferenceIOType.STRING);
   }
 
   void _showLoadingDialog(BuildContext context) {
@@ -359,57 +595,45 @@ class AnimatedAppDrawer extends StatelessWidget {
     );
   }
 
-  Future<void> _logoutLogic() async {
-    printRed("calling log out.......");
-    await AppSettings.saveData(
-      'USER_ISLOGIN',
-      false,
-      SharedPreferenceIOType.BOOL,
-    );
+  Future<void> _handleLogout() async {
+    _showLoadingDialog(widget.rootContext);
+
+    try {
+      await Future.wait([
+        _logoutLogic(),
+        Future.delayed(const Duration(seconds: 3)),
+      ]);
+
+      appNavigatorKey.currentState!.popUntil((route) => route.isFirst);
+      appNavigatorKey.currentState!.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginPage()),
+        (route) => false,
+      );
+    } catch (e) {
+      appNavigatorKey.currentState!.pop();
+      AppToast.error('Logout failed. Please try again.');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final menuItems = [
-      DrawerMenuItem(
-        index: 0,
-        icon: Icons.home_rounded,
-        label: 'Home',
-        routeName: '/home',
-      ),
-      DrawerMenuItem(
-        index: 1,
-        icon: Icons.person_rounded,
-        label: 'Profile',
-        routeName: '/profile',
-      ),
-      DrawerMenuItem(
-        index: 2,
-        icon: Icons.settings_rounded,
-        label: 'Settings',
-        routeName: '/settings',
-      ),
-      DrawerMenuItem(
-        index: 3,
-        icon: Icons.logout_rounded,
-        label: 'Logout',
-        isDividerAbove: true,
-        onTap: () => _handleLogout(),
-      ),
-    ];
+    final menuItems = _getMenuItems();
 
-    return Drawer(
-      elevation: 16,
-      child: Scaffold(
+    return SlideTransition(
+      position: _drawerSlideAnimation,
+      child: Drawer(
+        elevation: 0,
         backgroundColor: Colors.white,
-        body: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(),
-              const SizedBox(height: _DrawerConfig.defaultPadding),
-              Expanded(child: _buildMenuItems(context, menuItems)),
-              _buildFooter(),
-            ],
+        child: Scaffold(
+          backgroundColor: Colors.white,
+          body: SafeArea(
+            child: Column(
+              children: [
+                _buildHeader(),
+                Expanded(child: _buildMenuItems(menuItems)),
+                _buildFooter(),
+              ],
+            ),
           ),
         ),
       ),
@@ -418,34 +642,28 @@ class AnimatedAppDrawer extends StatelessWidget {
 
   Widget _buildHeader() {
     return Container(
-      width: double.infinity,
       padding: const EdgeInsets.all(_DrawerConfig.defaultPadding),
       decoration: _buildHeaderDecoration(),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
-        children: const [
-          Text(
-            'Vishnuvardhan',
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.5,
-            ),
+        children: [
+          Row(
+            children: [
+              _buildAvatar(),
+              const SizedBox(width: 16),
+              Expanded(child: _buildUserInfo()),
+              _buildHeaderActionButton(),
+            ],
           ),
-          SizedBox(height: 12),
-          Text(
-            'VishnuVardhanadravena02@gmail.com',
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.2,
+          if (widget.userPhoneNumber != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              widget.userPhoneNumber!,
+              style: _DrawerTypography.headerEmailStyle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -462,53 +680,179 @@ class AnimatedAppDrawer extends StatelessWidget {
         end: Alignment.bottomRight,
       ),
       borderRadius: const BorderRadius.only(
-        bottomRight: Radius.circular(_DrawerConfig.borderRadius),
+        bottomLeft: Radius.circular(24),
+        bottomRight: Radius.circular(24),
       ),
       boxShadow: [
         BoxShadow(
-          color: _DrawerColors.primaryGradientStart.withOpacity(0.4),
-          blurRadius: 16,
-          offset: const Offset(0, 8),
+          color: _DrawerColors.primaryGradientStart.withOpacity(0.3),
+          blurRadius: 20,
+          offset: const Offset(0, 10),
         ),
       ],
     );
   }
 
-  Widget _buildMenuItems(BuildContext context, List<DrawerMenuItem> menuItems) {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
-      itemCount: menuItems.length,
-      itemBuilder: (context, index) {
-        final item = menuItems[index];
-        return Column(
-          children: [
-            if (item.isDividerAbove)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3.0),
-                child: Divider(color: _DrawerColors.dividerColor, thickness: 1),
-              ),
-            _buildMenuItemTile(context, item),
+  Widget _buildAvatar() {
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          colors: [
+            _DrawerColors.accentLight.withOpacity(0.3),
+            _DrawerColors.accentColor.withOpacity(0.2),
           ],
-        );
-      },
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: Colors.white30, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child:
+          widget.userAvatarUrl != null
+              ? ClipRRect(
+                borderRadius: BorderRadius.circular(30),
+                child: Image.network(
+                  widget.userAvatarUrl!,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _buildAvatarPlaceholder(),
+                ),
+              )
+              : _buildAvatarPlaceholder(),
+    );
+  }
+
+  Widget _buildAvatarPlaceholder() {
+    final initials =
+        (widget.userName ?? 'U')
+            .split(' ')
+            .take(2)
+            .map((e) => e[0].toUpperCase())
+            .join();
+
+    return Center(
+      child: Text(
+        initials,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 24,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.0,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUserInfo() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          widget.userName ?? 'User',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: _DrawerTypography.headerNameStyle,
+        ),
+        const SizedBox(height: 6),
+        Text(
+          widget.userEmail ?? 'email@example.com',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: _DrawerTypography.headerEmailStyle,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHeaderActionButton() {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: widget.onSettingsTap ?? () => Navigator.pop(context),
+        customBorder: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Icon(
+            Icons.settings_rounded,
+            color: Colors.white.withOpacity(0.9),
+            size: 24,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuItems(List<DrawerMenuItem> items) {
+    return FadeTransition(
+      opacity: _itemsFadeAnimation,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 0),
+        itemCount: items.length,
+        itemBuilder: (context, index) {
+          final item = items[index];
+
+          if (item.type == MenuItemType.divider) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(
+                vertical: 8,
+                horizontal: _DrawerConfig.defaultPadding,
+              ),
+              child: Divider(
+                height: 1,
+                color: _DrawerColors.dividerColor,
+                thickness: 1,
+              ),
+            );
+          }
+
+          return _AnimatedMenuItem(
+            delay: Duration(milliseconds: 50 + (index * 40)),
+            child: _buildMenuItemTile(context, item),
+          );
+        },
+      ),
     );
   }
 
   Widget _buildMenuItemTile(BuildContext context, DrawerMenuItem item) {
+    final isDanger = item.type == MenuItemType.danger;
+    final isSettings = item.type == MenuItemType.settings;
+
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 6),
+      margin: const EdgeInsets.symmetric(
+        horizontal: _DrawerConfig.defaultPadding,
+        vertical: 4,
+      ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(_DrawerConfig.borderRadius),
-        border: Border.all(color: Colors.transparent, width: 2),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
+          onTap: () {
+            Navigator.pop(context);
+            item.onTap?.call();
+          },
           borderRadius: BorderRadius.circular(_DrawerConfig.borderRadius),
-          onTap: () => _handleMenuItemTap(context, item),
-          hoverColor: _DrawerColors.hoverBackground,
-          splashColor: _DrawerColors.accentColor.withOpacity(0.2),
-          highlightColor: _DrawerColors.accentColor.withOpacity(0.1),
+          hoverColor:
+              isDanger
+                  ? _DrawerColors.dangerColor.withOpacity(0.05)
+                  : _DrawerColors.hoverBackground,
+          splashColor:
+              isDanger
+                  ? _DrawerColors.dangerColor.withOpacity(0.1)
+                  : _DrawerColors.accentColor.withOpacity(0.1),
           child: Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: _DrawerConfig.contentPadding,
@@ -516,10 +860,52 @@ class AnimatedAppDrawer extends StatelessWidget {
             ),
             child: Row(
               children: [
-                _buildMenuIcon(item.icon),
+                _buildMenuIcon(item.icon, isDanger, isSettings),
                 const SizedBox(width: 16),
-                Expanded(child: _buildMenuLabel(item.label)),
-                _buildMenuTrailing(),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        item.label,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color:
+                              isDanger
+                                  ? _DrawerColors.dangerColor
+                                  : _DrawerColors.textPrimary,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                      if (item.description != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          item.description!,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w400,
+                            color: _DrawerColors.textSecondary.withOpacity(0.7),
+                            letterSpacing: 0.1,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (item.showBadge && item.badgeCount != null)
+                  _buildBadge(item.badgeCount!),
+                if (item.trailing != null) item.trailing!,
+                if (!isDanger && item.description != null)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8.0),
+                    child: Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 14,
+                      color: Colors.grey.shade300,
+                    ),
+                  ),
               ],
             ),
           ),
@@ -528,97 +914,138 @@ class AnimatedAppDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuIcon(IconData icon) {
+  Widget _buildMenuIcon(IconData icon, bool isDanger, bool isSettings) {
+    final bgColor =
+        isDanger
+            ? _DrawerColors.dangerColor.withOpacity(0.1)
+            : isSettings
+            ? _DrawerColors.accentLight.withOpacity(0.15)
+            : _DrawerColors.accentColor.withOpacity(0.08);
+
+    final iconColor =
+        isDanger
+            ? _DrawerColors.dangerColor
+            : isSettings
+            ? _DrawerColors.accentLight
+            : _DrawerColors.accentColor;
+
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        color: _DrawerColors.accentColor.withOpacity(0.1),
+        color: bgColor,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Icon(icon, color: _DrawerColors.accentColor, size: 24),
+      child: Icon(icon, color: iconColor, size: 18),
     );
   }
 
-  Widget _buildMenuLabel(String label) {
-    return Text(
-      label,
-      style: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: Color(0xFF2C2C2C),
-        letterSpacing: 0.3,
+  Widget _buildBadge(int count) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: _DrawerColors.dangerColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        count > 99 ? '99+' : count.toString(),
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.2,
+        ),
       ),
     );
-  }
-
-  Widget _buildMenuTrailing() {
-    return Icon(
-      Icons.arrow_forward_ios_rounded,
-      size: 14,
-      color: Colors.grey.shade400,
-    );
-  }
-
-  void _handleMenuItemTap(BuildContext context, DrawerMenuItem item) {
-    Navigator.pop(context);
-
-    if (item.onTap != null) {
-      item.onTap!();
-    } else if (item.routeName != null) {
-      Future.delayed(const Duration(milliseconds: 200), () {
-        switch (item.routeName) {
-          case '/home':
-            printRed("calling home... ");
-            // Navigator.pushNamed(context, '/home');
-            break;
-
-          case '/profile':
-            printRed("calling profile... ");
-            break;
-
-          case '/settings':
-            printRed("calling settings... ");
-            break;
-
-          case '/logout':
-            _handleLogout();
-            break;
-
-          default:
-            debugPrint('Unknown route: ${item.routeName}');
-        }
-      });
-    }
   }
 
   Widget _buildFooter() {
-    return Padding(
+    return Container(
       padding: const EdgeInsets.all(_DrawerConfig.defaultPadding),
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(color: _DrawerColors.dividerColor, width: 1),
+        ),
+      ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const Divider(color: _DrawerColors.dividerColor),
-          const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildFooterIcon(Icons.info_outline_rounded),
-              const SizedBox(width: 8),
-              const Text(
-                'Version 1.0.0',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
-                  fontWeight: FontWeight.w500,
-                ),
+              Icon(
+                Icons.info_outline_rounded,
+                size: 14,
+                color: _DrawerColors.textSecondary.withOpacity(0.6),
               ),
+              const SizedBox(width: 6),
+              Text('App Version 1.0.0', style: _DrawerTypography.footerStyle),
             ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '© 2024 Your Company',
+            style: _DrawerTypography.footerStyle.copyWith(
+              fontSize: 10,
+              color: _DrawerColors.textSecondary.withOpacity(0.5),
+            ),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildFooterIcon(IconData icon) {
-    return Icon(icon, size: 16, color: Colors.grey.shade400);
+class _AnimatedMenuItem extends StatefulWidget {
+  final Duration delay;
+  final Widget child;
+
+  const _AnimatedMenuItem({required this.delay, required this.child});
+
+  @override
+  State<_AnimatedMenuItem> createState() => _AnimatedMenuItemState();
+}
+
+class _AnimatedMenuItemState extends State<_AnimatedMenuItem>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0.3, 0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+
+    Future.delayed(widget.delay, () {
+      if (mounted) _controller.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SlideTransition(
+      position: _slideAnimation,
+      child: FadeTransition(opacity: _fadeAnimation, child: widget.child),
+    );
   }
 }

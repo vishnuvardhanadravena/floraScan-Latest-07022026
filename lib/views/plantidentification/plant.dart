@@ -1749,13 +1749,19 @@ import '../../providers/analyze.dart';
 class PlantIdentificationScreen extends StatelessWidget {
   const PlantIdentificationScreen({super.key});
 
-  static const Color _scaffoldBackgroundColor = Color(0xFFF5F7FA);
+  static const Color _scaffoldBackgroundColor = const Color.fromARGB(
+    205,
+    255,
+    255,
+    255,
+  );
   static const Color _appBarTitleColor = Color(0xFF2E7D32); // Dark Green
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: AnimatedAppDrawer(rootContext: context),
+     // drawer: AnimatedAppDrawer(rootContext: context),
+      drawer: TelegramStyleDrawer(rootContext: context,),
       backgroundColor: _scaffoldBackgroundColor,
       appBar: AppBar(
         elevation: 0,

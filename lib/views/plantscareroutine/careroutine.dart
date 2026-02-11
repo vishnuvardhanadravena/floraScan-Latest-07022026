@@ -9,7 +9,6 @@ import 'package:aiplantidentifier/utils/sarech_bar.dart';
 import 'package:aiplantidentifier/views/mainscrens/mainscreen.dart';
 import 'package:flutter/material.dart';
 
-
 class RoutineScreen extends StatefulWidget {
   const RoutineScreen({super.key});
 
@@ -88,8 +87,9 @@ class _RoutineScreenState extends State<RoutineScreen> with RouteAware {
     final width = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      drawer: AnimatedAppDrawer(rootContext: context),
-      backgroundColor: Colors.white,
+          // drawer: AnimatedAppDrawer(rootContext: context),
+      drawer: TelegramStyleDrawer(rootContext: context,),
+      backgroundColor: const Color.fromARGB(205, 255, 255, 255),
       appBar: AppBar(title: const Text('Routine')),
       body: Column(
         children: [
@@ -367,7 +367,7 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
     final width = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color.fromARGB(205, 255, 255, 255),
       appBar: AppBar(
         title: const Text(
           'Personalized Plant Care',
@@ -831,8 +831,6 @@ class UpcomingCareCard extends StatelessWidget {
     );
   }
 }
-
-
 
 void _log(String message) {
   const red = '\x1B[31m';

@@ -52,7 +52,7 @@ class _GrowthDetaliesScreenState extends State<GrowthDetaliesScreen>
     final width = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor:  const Color.fromARGB(205, 255, 255, 255),
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),

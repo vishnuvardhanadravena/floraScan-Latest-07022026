@@ -75,8 +75,8 @@ class AppSettings {
   static bool versionCheck = true;
   static String headerCurrentDateTime = '';
   static Map<String, dynamic> api = {};
-  static String host = 'https://dev.quantixbiz.com';
-  static String auth = '/auth';
+  static String host = 'https://apis.plantishtha.com';
+  static String auth = '/podha/auth/appuser';
   static String users = '/users';
   static String plans = '/plans';
   static String deposite = '/deposit';
@@ -94,13 +94,15 @@ class AppSettings {
   static void updateURL() {
     api = {
       /// ================= AUTH =================
-      'SIG_IN': '$authPathUri/login-api',
+      'SIG_IN': '$authPathUri/appuser-login',
       'SIG_IN_TIME': 0,
-      'SIG_UP': '$authPathUri/register-user',
-      'SIG_UP_TIME': 0,
-      'LOG_OUT': '$authPathUri/logout-api',
-      'LOG_OUT_TIME': 0,
+      'PROFILE_DETAILS': '$authPathUri/get-user-details',
+      'PROFILE_DETAILS_TIME': 0,
 
+      // 'SIG_UP': '$authPathUri/register-user',
+      // 'SIG_UP_TIME': 0,
+      // 'LOG_OUT': '$authPathUri/logout-api',
+      // 'LOG_OUT_TIME': 0,
       'CHECK_REFERRAL': '$authPathUri/check-referral',
       'CHECK_REFERRAL_TIME': 0,
       'FORGOT_PASSWORD': '$authPathUri/forgot-password',
@@ -139,9 +141,8 @@ class AppSettings {
       'ARG_FROM_SUMBMIT_TIME': 0,
       'KYC_SUBMIT': '$usersPathUri/kyc-formsubmit',
       'KYC_SUBMIT_TIME': 0,
+
       //profile
-      'PROFILE_DETAILS': '$usersPathUri/profile-details',
-      'PROFILE_DETAILS_TIME': 0,
       'PROFILE_UPDATE': '$usersPathUri/profile-update',
       'PROFILE_UPDATE_TIME': 0,
       'CHANGE_PASSWORD': '$usersPathUri/password-update',
@@ -569,7 +570,8 @@ class AppSettings {
   static Future<Map<String, String>> headers() async {
     Map<String, String> headers = <String, String>{};
     headers[HttpHeaders.contentTypeHeader] = 'application/json';
-    headers['api-token'] = AppSettings.appInfo!.USER_TOKEN.trim();
+    headers['Authorization'] =
+        "Bearer ${AppSettings.appInfo!.USER_TOKEN.trim()}";
     // "MW4UPlXwVBTrNpTCiSE6r7WXfriy4vKwlyjL4zYk853UQFei1rwnj0vgU32L";
     printGreen("User-TOKEN ${AppSettings.appInfo!.USER_TOKEN}");
     return headers;

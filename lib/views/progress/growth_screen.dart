@@ -14,8 +14,6 @@ import 'package:intl/intl.dart';
 import '../../database/database.dart';
 import '../../providers/analyze.dart';
 
-
-
 class GrowthScreen extends StatefulWidget {
   const GrowthScreen({super.key});
 
@@ -91,8 +89,9 @@ class _GrowthScreenState extends State<GrowthScreen> {
         final filteredPlants = _filterPlants(plants);
 
         return Scaffold(
-           drawer: AnimatedAppDrawer(rootContext: context),
-          backgroundColor: Colors.white,
+          // drawer: AnimatedAppDrawer(rootContext: context),
+          drawer: TelegramStyleDrawer(rootContext: context),
+          backgroundColor: const Color.fromARGB(205, 255, 255, 255),
           appBar: AppBar(
             title: const Text(
               'Growth',

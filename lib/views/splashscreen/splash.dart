@@ -1,9 +1,11 @@
 import 'package:aiplantidentifier/core/app_settings.dart';
 import 'package:aiplantidentifier/database/database.dart';
+import 'package:aiplantidentifier/providers/profile_provider.dart';
 import 'package:aiplantidentifier/views/mainscrens/mainscreen.dart';
 import 'package:aiplantidentifier/views/onbaording/onbaording.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -68,7 +70,17 @@ class _SplashScreenState extends State<SplashScreen>
       'USER_ISLOGIN',
       SharedPreferenceIOType.BOOL,
     );
-    if (login) {
+
+    if (!mounted) return;
+
+    if (login == true) {
+      await Provider.of<ProfileProvider>(
+        context,
+        listen: false,
+      ).getUserProfileApi();
+
+      if (!mounted) return;
+
       Navigator.of(
         context,
       ).pushReplacement(MaterialPageRoute(builder: (_) => const MainScreen()));

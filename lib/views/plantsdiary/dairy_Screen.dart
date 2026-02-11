@@ -76,7 +76,7 @@ class _PlantDiaryScreenState extends State<PlantDiaryScreen> {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor:  const Color.fromARGB(205, 255, 255, 255),
       appBar: AppBar(
         title: const Text('Plant Diary'),
         elevation: 2,

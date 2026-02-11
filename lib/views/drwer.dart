@@ -41,7 +41,7 @@ class _PremiumAnimatedDrawerState extends State<PremiumAnimatedDrawer>
 
     _slideAnimation = CurvedAnimation(
       parent: _drawerController,
-      curve: const Cubic(0.64, 0, 0.36, 1), // Elastic ease-out
+      curve: const Cubic(0.64, 0, 0.36, 1), 
     );
 
     _scaleAnimation = Tween<double>(begin: 0.92, end: 1.0).animate(
@@ -72,7 +72,7 @@ class _PremiumAnimatedDrawerState extends State<PremiumAnimatedDrawer>
   void _onItemTap(int index) {
     setState(() => _activeIndex = index);
     
-    // Spring animation for active item
+   
     final spring = SpringSimulation(
       const SpringDescription(mass: 0.5, stiffness: 200, damping: 15),
       1.0,
@@ -80,7 +80,7 @@ class _PremiumAnimatedDrawerState extends State<PremiumAnimatedDrawer>
       0.0,
     );
     
-    // Optional: Navigate to screen here
+  
     _drawerController.reverse().then((_) {
       setState(() => _isExpanded = false);
     });
@@ -98,7 +98,7 @@ class _PremiumAnimatedDrawerState extends State<PremiumAnimatedDrawer>
       },
       child: Stack(
         children: [
-          // Main content with scale animation
+        
           ScaleTransition(
             scale: _scaleAnimation,
             child: GestureDetector(
@@ -107,7 +107,7 @@ class _PremiumAnimatedDrawerState extends State<PremiumAnimatedDrawer>
             ),
           ),
           
-          // Drawer overlay
+        
           SlideTransition(
             position: Tween<Offset>(
               begin: const Offset(-1.0, 0.0),
@@ -115,8 +115,7 @@ class _PremiumAnimatedDrawerState extends State<PremiumAnimatedDrawer>
             ).animate(_slideAnimation),
             child: _buildDrawer(),
           ),
-          
-          // Dim overlay when drawer open
+         
           if (_isExpanded)
             GestureDetector(
               onTap: _toggleDrawer,
@@ -159,10 +158,10 @@ class _PremiumAnimatedDrawerState extends State<PremiumAnimatedDrawer>
             color: Colors.white.withOpacity(0.08),
             child: Column(
               children: [
-                // Header with profile
+              
                 _buildHeader(),
                 
-                // Menu items
+            
                 Expanded(
                   child: ListView.builder(
                     padding: const EdgeInsets.only(top: 16),

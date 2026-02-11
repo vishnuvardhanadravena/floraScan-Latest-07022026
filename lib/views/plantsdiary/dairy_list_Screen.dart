@@ -63,9 +63,10 @@ class _PlantListScreenState extends State<PlantListScreen> {
         final isLargeTablet = screenWidth > 1200;
 
         return Scaffold(
-   drawer: AnimatedAppDrawer(rootContext: context),
+        // drawer: AnimatedAppDrawer(rootContext: context),
+      drawer: TelegramStyleDrawer(rootContext: context,),
           appBar: _buildAppBar(context, isTablet),
-          backgroundColor: Colors.white,
+          backgroundColor:  const Color.fromARGB(205, 255, 255, 255),
           body: RefreshIndicator(
             onRefresh: () async {
               await context.read<PlantProvider>().loadPlants();

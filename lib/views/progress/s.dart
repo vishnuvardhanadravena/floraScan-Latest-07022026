@@ -31,7 +31,7 @@ class PlantHealthDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _scaffoldBackgroundColor,
+      backgroundColor: const Color.fromARGB(205, 255, 255, 255),
       appBar: AppBar(
         // backgroundColor: _appBarBackgroundColor,
         elevation: 1.5,
