@@ -1,5 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
+import 'package:aiplantidentifier/core/app_settings.dart';
+import 'package:aiplantidentifier/models/sacnedimage_data_model.dart';
 import 'package:flutter/material.dart';
 
 import '../database/database.dart';
@@ -78,9 +81,7 @@ class PlantIdentificationProvider with ChangeNotifier {
 
   bool _isValidImageFormat(Uint8List bytes) {
     if (bytes.length < 2) return false;
-
     if (bytes[0] == 0xFF && bytes[1] == 0xD8) return true;
-
     if (bytes.length >= 4 &&
         bytes[0] == 0x89 &&
         bytes[1] == 0x50 &&
@@ -88,7 +89,6 @@ class PlantIdentificationProvider with ChangeNotifier {
         bytes[3] == 0x47) {
       return true;
     }
-
     if (bytes.length >= 12 &&
         bytes[0] == 0x52 &&
         bytes[1] == 0x49 &&
@@ -100,7 +100,6 @@ class PlantIdentificationProvider with ChangeNotifier {
         bytes[11] == 0x50) {
       return true;
     }
-
     return false;
   }
 
@@ -132,5 +131,77 @@ class PlantIdentificationProvider with ChangeNotifier {
           (healthStatusCounts[healthStatus] ?? 0) + 1;
     }
     return healthStatusCounts;
+  }
+
+  bool _scanning = false;
+  String _scanerror = "";
+  bool get scanloading => _scanning;
+  String get scanerror => _scanerror;
+
+  String? errorMessage;
+  ScanedImageResponce? profileResponse;
+
+  Future<void> scanImage(File imageFile, {bool forceReload = false}) async {
+    _scanning = true;
+    _scanerror = "";
+    notifyListeners();
+
+    try {
+      final baseUrl = AppSettings.api['SCAN-IMAGE'] ?? '';
+
+      if (baseUrl.isEmpty) {
+        throw Exception("SCAN-IMAGE API not configured");
+      }
+
+      final urlWithParams = '$baseUrl';
+
+      bool shouldCallAPI =
+          await timeDifferenceInMinutes('SCAN-IMAGE') || forceReload;
+
+      String apiData = '';
+
+      if (shouldCallAPI) {
+        print("Image path: ${imageFile.path}");
+        print("File exists: ${imageFile.existsSync()}");
+
+        await AppSettings.callRemoteMultipartPostAPI(
+          url: urlWithParams,
+          urlRef: 'SCAN-IMAGE',
+          fields: {},
+          files: {"scanimage": imageFile},
+        );
+        apiData = await AppSettings.getData(
+          'SCAN-IMAGE_DATA',
+          SharedPreferenceIOType.STRING,
+        );
+      }
+      if (apiData.isEmpty) {
+        throw Exception("Empty profile response");
+      }
+      final decoded = jsonDecode(apiData);
+      final response = ScanedImageResponce.fromJson(decoded);
+      profileResponse = response;
+      if (response.success != true) {
+        throw Exception(response.message ?? "Something went wrong");
+      }
+
+      if (response.data != null) {
+        // final profile = response.data!;
+        // AppSettings.userLoginDetails.display_name = profile.name ?? "";
+        // AppSettings.userLoginDetails.Email = profile.email ?? "";
+        // AppSettings.userLoginDetails.Mobile_NUmber =
+        //     profile.phone?.toString() ?? "";
+
+        // await AppSettings.updateStoredPreferenceValues(
+        //   newData: AppSettings.userLoginDetails,
+        // );
+        notifyListeners();
+      }
+    } catch (e) {
+      _scanerror = e.toString();
+    } finally {
+      _scanning = false;
+      notifyListeners();
+    }
   }
 }

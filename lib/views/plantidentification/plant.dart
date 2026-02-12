@@ -1760,8 +1760,8 @@ class PlantIdentificationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-     // drawer: AnimatedAppDrawer(rootContext: context),
-      drawer: TelegramStyleDrawer(rootContext: context,),
+      // drawer: AnimatedAppDrawer(rootContext: context),
+      drawer: TelegramStyleDrawer(rootContext: context),
       backgroundColor: _scaffoldBackgroundColor,
       appBar: AppBar(
         elevation: 0,

@@ -434,11 +434,13 @@ class _TelegramStyleDrawerState extends State<TelegramStyleDrawer>
   late AnimationController _itemsAnimationController;
   late Animation<Offset> _drawerSlideAnimation;
   late Animation<double> _itemsFadeAnimation;
-
+  String? userName = "UserName";
+  String? userEmail;
   @override
   void initState() {
     super.initState();
-
+    userName = AppSettings.userLoginDetails.display_name;
+    userEmail = AppSettings.userLoginDetails.display_name;
     _drawerAnimationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -478,14 +480,6 @@ class _TelegramStyleDrawerState extends State<TelegramStyleDrawer>
 
   List<DrawerMenuItem> _getMenuItems() {
     return [
-      // // Main Navigation Section
-      // DrawerMenuItem(
-      //   index: 0,
-      //   icon: Icons.person_rounded,
-      //   label: 'My Profile',
-      //   description: 'View and edit profile',
-      //   onTap: widget.onProfileTap ?? () => Navigator.pop(context),
-      // ),
       DrawerMenuItem(
         index: 1,
         icon: Icons.lock_rounded,
@@ -501,58 +495,7 @@ class _TelegramStyleDrawerState extends State<TelegramStyleDrawer>
           );
         },
       ),
-      // DrawerMenuItem(
-      //   index: 2,
-      //   icon: Icons.notifications_rounded,
-      //   label: 'Notifications',
-      //   description: 'Manage alerts',
-      //   showBadge: true,
-      //   badgeCount: 3,
-      //   onTap: () {
-      //     Navigator.pop(context);
-      //     // Your navigation logic
-      //   },
-      // ),
 
-      // // Divider
-      // DrawerMenuItem(
-      //   index: 3,
-      //   icon: Icons.info_rounded,
-      //   label: '',
-      //   type: MenuItemType.divider,
-      // ),
-
-      // // Settings Section
-      // DrawerMenuItem(
-      //   index: 4,
-      //   icon: Icons.settings_rounded,
-      //   label: 'Settings',
-      //   description: 'App preferences',
-      //   type: MenuItemType.settings,
-      //   onTap: widget.onSettingsTap ?? () => Navigator.pop(context),
-      // ),
-      // DrawerMenuItem(
-      //   index: 5,
-      //   icon: Icons.help_rounded,
-      //   label: 'Help & Support',
-      //   description: 'Get help',
-      //   onTap: () {
-      //     Navigator.pop(context);
-      //     // Your navigation logic
-      //   },
-      // ),
-      // DrawerMenuItem(
-      //   index: 6,
-      //   icon: Icons.info_outline_rounded,
-      //   label: 'About App',
-      //   description: 'App information',
-      //   onTap: () {
-      //     Navigator.pop(context);
-      //     // Your navigation logic
-      //   },
-      // ),
-
-      // Divider
       DrawerMenuItem(
         index: 7,
         icon: Icons.logout_rounded,
@@ -626,14 +569,12 @@ class _TelegramStyleDrawerState extends State<TelegramStyleDrawer>
         backgroundColor: Colors.white,
         child: Scaffold(
           backgroundColor: Colors.white,
-          body: SafeArea(
-            child: Column(
-              children: [
-                _buildHeader(),
-                Expanded(child: _buildMenuItems(menuItems)),
-                _buildFooter(),
-              ],
-            ),
+          body: Column(
+            children: [
+              _buildHeader(),
+              Expanded(child: _buildMenuItems(menuItems)),
+              _buildFooter(),
+            ],
           ),
         ),
       ),
@@ -642,9 +583,12 @@ class _TelegramStyleDrawerState extends State<TelegramStyleDrawer>
 
   Widget _buildHeader() {
     return Container(
+      height: MediaQuery.of(context).size.height * 0.2,
       padding: const EdgeInsets.all(_DrawerConfig.defaultPadding),
       decoration: _buildHeaderDecoration(),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.end,
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
@@ -732,8 +676,9 @@ class _TelegramStyleDrawerState extends State<TelegramStyleDrawer>
 
   Widget _buildAvatarPlaceholder() {
     final initials =
-        (widget.userName ?? 'U')
+        (userName ?? 'U')
             .split(' ')
+            .where((e) => e.isNotEmpty)
             .take(2)
             .map((e) => e[0].toUpperCase())
             .join();
@@ -757,14 +702,14 @@ class _TelegramStyleDrawerState extends State<TelegramStyleDrawer>
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          widget.userName ?? 'User',
+          userName ?? 'User',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: _DrawerTypography.headerNameStyle,
         ),
         const SizedBox(height: 6),
         Text(
-          widget.userEmail ?? 'email@example.com',
+          userEmail ?? 'email@example.com',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: _DrawerTypography.headerEmailStyle,

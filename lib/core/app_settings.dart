@@ -9,6 +9,8 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 enum AuthResponse { FAILED, SUCCESS, EXCEPTION, OTHER_REASON }
@@ -77,6 +79,7 @@ class AppSettings {
   static Map<String, dynamic> api = {};
   static String host = 'https://apis.plantishtha.com';
   static String auth = '/podha/auth/appuser';
+
   static String users = '/users';
   static String plans = '/plans';
   static String deposite = '/deposit';
@@ -93,123 +96,16 @@ class AppSettings {
 
   static void updateURL() {
     api = {
-      /// ================= AUTH =================
       'SIG_IN': '$authPathUri/appuser-login',
       'SIG_IN_TIME': 0,
       'PROFILE_DETAILS': '$authPathUri/get-user-details',
       'PROFILE_DETAILS_TIME': 0,
-
-      // 'SIG_UP': '$authPathUri/register-user',
-      // 'SIG_UP_TIME': 0,
-      // 'LOG_OUT': '$authPathUri/logout-api',
-      // 'LOG_OUT_TIME': 0,
-      'CHECK_REFERRAL': '$authPathUri/check-referral',
-      'CHECK_REFERRAL_TIME': 0,
-      'FORGOT_PASSWORD': '$authPathUri/forgot-password',
-      'FORGOT_PASSWORD_TIME': 0,
-      'VERIFY_RESET_PASSWORD': '$authPathUri/verifyreset-password',
-      'VERIFY_RESET_PASSWORD_TIME': 0,
-      'RESET_PASSWORD': '$authPathUri/reset-password',
-
-      /// ================= USERS =================
-      'RESET_PASSWORD_TIME': 0,
-      'SEND_EMAIL_VERIFICATION_CODE': '$usersPathUri/email-code',
-      'SEND_EMAIL_VERIFICATION_CODE_TIME': 0,
-      'VERIFY_EMAIL_VERIFICATION_CODE': '$usersPathUri/email-verify',
-      'VERIFY_EMAIL_VERIFICATION_CODE_TIME': 0,
-      'SEND_MOBILE_VERIFICATION_CODE': '$usersPathUri/mobile-code',
-      'SEND_MOBILE_VERIFICATION_CODE_TIME': 0,
-      'VERIFY_MOBILE_VERIFICATION_CODE': '$usersPathUri/mobile-verify',
-      'VERIFY_MOBILE_VERIFICATION_CODE_TIME': 0,
-
-      'GET_ALL_DASHBOARD': '$usersPathUri/dashboard',
-      'GET_ALL_DASHBOARD_TIME': 0,
-      'GET_ALL_TRANSACTION_HISTORY': '$usersPathUri/transactions-history',
-      'GET_ALL_TRANSACTION_HISTORY_TIME': 0,
-
-      'GET_ALL_DEPOSITS_HISTORY': '$usersPathUri/deposits-history',
-      'GET_ALL_DEPOSITS_HISTORY_TIME': 0,
-      'SEARCH_DEPOSIT': '$usersPathUri/deposits-history',
-      'SEARCH_DEPOSIT_TIME': 0,
-      'GET_ALL_INVEST_LOG': '$usersPathUri/invest-log',
-      'GET_ALL_INVEST_LOG_TIME': 0,
-      'GET_ALL_SELF_COMMISSION': '$usersPathUri/self-commission',
-      'GET_ALL_SELF_COMMISSION_TIME': 0,
-      'GET_ALL_TOTAL_COMMISSION': '$usersPathUri/totalterm-commission',
-      'GET_ALL_TOTAL_COMMISSION_TIME': 0,
-      'ARG_FROM_SUMBMIT': '$usersPathUri/agro-form',
-      'ARG_FROM_SUMBMIT_TIME': 0,
-      'KYC_SUBMIT': '$usersPathUri/kyc-formsubmit',
-      'KYC_SUBMIT_TIME': 0,
-
-      //profile
-      'PROFILE_UPDATE': '$usersPathUri/profile-update',
-      'PROFILE_UPDATE_TIME': 0,
-      'CHANGE_PASSWORD': '$usersPathUri/password-update',
+      'CHANGE_PASSWORD': '$authPathUri/change-password',
       'CHANGE_PASSWORD_TIME': 0,
-      'SUBMIT_PROFILE': '$usersPathUri/profiles',
-      'SUBMIT_PROFILE_TIME': 0,
-
-      /// ================= PLANS =================
-      'GET_ALL_PLAN_DETAILS': '$plansPathUri/plan-details',
-      'GET_ALL_PLAN_DETAILS_TIME': 0,
-      'GET_ALL_MY_REF': '$plansPathUri/my-ref',
-      'GET_ALL_MY_REF_TIME': 0,
-      'GET_ALL_BV-LOG': '$plansPathUri/bv-log',
-      'GET_ALL_BV-LOG_TIME': 0,
-      'GET_ALL_BV-CUT': '$plansPathUri/bv-cut',
-      'GET_ALL_BV-CUT_TIME': 0,
-      'GET_ALL_BV-LOG_Side': '$plansPathUri/bv-log',
-      'GET_ALL_BV-LOG_Side_TIME': 0,
-      'GET_ALL_MY_TREE': '$plansPathUri/my-tree',
-      'GET_ALL_MY_TREE_TIME': 0,
-      'GET_ALL_OTHER_TREE': '$plansPathUri/other-tree',
-      'GET_ALL_OTHER_TREE_TIME': 0,
-      'GET_ALL_PURCHASE_PLAN': '$plansPathUri/purchase-plan',
-      'GET_ALL_PURCHASE_PLAN_TIME': 0,
-      'TOTALTEAM_SUMMARY': '$plansPathUri/totalteam-summary',
-      'TOTALTEAM_SUMMARY_TIME': 0,
-      'FETCH_CONTRIES': '$plansPathUri/country',
-      'FETCH_CONTRIES _TIME': 0,
-
-      /// ================= WITHDRAW =================
-      'GET_ALL_WITHDRAWALS':
-          '$withdrawalsPathUri/tds-stmt', //https://dev.quantixbiz.com/plans/withdraw-stmt?user_id=3
-      'GET_ALL_WITHDRAWALS_TIME': 0,
-      'GET_ALL_WITHDRAW': '$withdrawalsPathUri/withdraw-stmt',
-      'GET_ALL_WITHDRAW_TIME': 0,
-      'GET_ALL_TDS_SMT': '$withdrawalsPathUri/tds-stmt',
-      'GET_ALL_TDS_SMT_TIME': 0,
-      'GET_METHODES_wITHDRAW': '$withdrawalsPathUri/methods-withdraw',
-      "GET_METHODES_wITHDRAW_TIME": 0,
-      "GET_INSERT_WITHDRAW": '$withdrawalsPathUri/insert-withdraw',
-      "GET_INSERT_WITHDRAW_TIME": 0,
-      "GET_CONFIRM_WITHDRAW": '$withdrawalsPathUri/confirm-withdraw',
-      "GET_CONFRIM_WITHDRAW_TIME": 0,
-
-      /// ================= DOCUMENT =================
-      "GET_DOCUMENT_LIST": '$documentPathUri/doc-list',
-      "GET_DOCUMENT_LIST_TIME": 0,
-
-      /// ================= DEPOSITE =================
-      "GET_DEPOSIT_METHODE": '$depositePathUri/deposit-methods',
-      "GET_DEPOSIT_METHODE_TIME": 0,
-      "GET_DEPOSIT_INSERT": '$depositePathUri/deposit-insert',
-      "GET_DEPOSIT_INSERT_TIME": 0,
-      "GET_DEPOSIT_CONFIRM": '$depositePathUri/deposit-confirm',
-      "GET_DEPOSIT_CONFIRM_TIME": 0,
-
-      /// ================= SUPORRT =================
-      'GET_All_TICKETS': '$suportPathUri/list-ticket',
-      'GET_All_TICKETS_TIME': 0,
-      'GET_TICKET_VIEW': '$suportPathUri/message-view-ticket',
-      'GET_TICKET_VIEW_TIME': 0,
-      'SEND_TICKET_REPLY': '$suportPathUri/reply-ticket',
-      'SEND_TICKET_REPLY_TIME': 0,
-      'CLOSE_TICKET': '$suportPathUri/close-ticket',
-      'CLOSE_TICKET_TIME': 0,
-      'CREATE_TICKET': '$suportPathUri/open-ticket',
-      'CREATE_TICKET_TIME': 0,
+      "SCAN-IMAGE": '$authPathUri/scan-image',
+      'SCAN-IMAGE_TIME': 0,
+      "LOG_OUT": '$authPathUri/logout',
+      'LOG_OUT_TIME': 0,
     };
   }
 
@@ -259,27 +155,6 @@ class AppSettings {
     }
 
     return null;
-  }
-
-  static Future<Map<String, bool>> getUserFlowFlags() async {
-    return {
-      'profileComplete': await AppSettings.getData(
-        'PROFILE_COMPLITED',
-        SharedPreferenceIOType.BOOL,
-      ),
-      'emailVerified': await AppSettings.getData(
-        'EMAIL_VERIFIED',
-        SharedPreferenceIOType.BOOL,
-      ),
-      'mobileVerified': await AppSettings.getData(
-        'MOBILE_VERIFIED',
-        SharedPreferenceIOType.BOOL,
-      ),
-      'hasFilledAgroForm': await AppSettings.getData(
-        'ARGO_FROM_FILLED',
-        SharedPreferenceIOType.BOOL,
-      ),
-    };
   }
 
   static saveData(String key, value, type) async {
@@ -796,18 +671,14 @@ class AppSettings {
     printBlue("FIELDS     : $fields");
     printBlue("FILES      : ${files.keys}");
     printBlue("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-
     final bool internet = await internetConnectivityCheck();
-
     if (!internet) {
       printRed("❌ NO INTERNET CONNECTION");
       displayLongErrorToast("No Internet Connection");
       return RestResponse.failed;
     }
-
     try {
       final headersMap = requestHeaders ?? await headers();
-
       final request = http.MultipartRequest('POST', Uri.parse(url));
 
       /// 🔹 Headers (do NOT set content-type manually)
@@ -817,11 +688,26 @@ class AppSettings {
       request.fields.addAll(fields);
 
       /// 🔹 Files
+      // for (final entry in files.entries) {
+      //   printBlue("ImagePath: ${entry.value.path},${entry.key}");
+      //   request.files.add(
+      //     await http.MultipartFile.fromPath(
+      //       entry.key, // backend key (e.g. "image")
+      //       entry.value.path,
+      //     ),
+      //   );
+      // }
       for (final entry in files.entries) {
+        final file = entry.value;
+
+        final mimeType = lookupMimeType(file.path) ?? 'image/jpeg';
+        final mimeSplit = mimeType.split('/');
+
         request.files.add(
           await http.MultipartFile.fromPath(
-            entry.key, // backend key (e.g. "image")
-            entry.value.path,
+            entry.key,
+            file.path,
+            contentType: MediaType(mimeSplit[0], mimeSplit[1]),
           ),
         );
       }
@@ -829,31 +715,25 @@ class AppSettings {
       final streamedResponse = await request.send().timeout(
         const Duration(seconds: 30),
       );
-
       final response = await http.Response.fromStream(streamedResponse);
-
       printBlue("STATUS CODE: ${response.statusCode}");
 
       /// ---------------- SUCCESS ----------------
       if (response.statusCode >= 200 && response.statusCode < 300) {
         printGreen("✅ API MULTIPART SUCCESS");
-        printGreen("RESPONSE   : ${response.body}");
+        printGreen("RESPONSE   : ${response.body.toString()}");
         printGreen("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-
         await saveData(
           '${urlRef}_TIME',
           DateTime.now().millisecondsSinceEpoch,
           SharedPreferenceIOType.INTEGER,
         );
-
         await saveData('${urlRef}_STATE', 1, SharedPreferenceIOType.INTEGER);
-
         await saveData(
           '${urlRef}_DATA',
           response.body,
           SharedPreferenceIOType.STRING,
         );
-
         return response.body;
       }
       /// ---------------- CLIENT ERROR ----------------
@@ -862,31 +742,26 @@ class AppSettings {
         printRed("STATUS     : ${response.statusCode}");
         printRed("RESPONSE   : ${response.body}");
         printRed("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-
         await saveData('${urlRef}_STATE', 2, SharedPreferenceIOType.INTEGER);
-
         await saveData(
           '${urlRef}_DATA',
           response.body,
           SharedPreferenceIOType.STRING,
         );
-
         return response.body;
       }
       /// ---------------- SERVER ERROR ----------------
       else {
         printRed("❌ API SERVER ERROR");
         printRed("STATUS     : ${response.statusCode}");
+        printRed("RESPONSE   : ${response.body}");
         printRed("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-
         await saveData('${urlRef}_STATE', 3, SharedPreferenceIOType.INTEGER);
-
         await saveData(
           '${urlRef}_DATA',
           'SERVER_ERROR',
           SharedPreferenceIOType.STRING,
         );
-
         return RestResponse.SERVERNOTRESPONDING;
       }
     }
@@ -894,9 +769,7 @@ class AppSettings {
     on TimeoutException {
       printRed("⏳ API MULTIPART TIMEOUT");
       printRed("URL        : $url");
-
       await saveData('${urlRef}_STATE', 3, SharedPreferenceIOType.INTEGER);
-
       return RestResponse.SERVERNOTRESPONDING;
     }
     /// ---------------- UNKNOWN ERROR ----------------
@@ -904,9 +777,7 @@ class AppSettings {
       printRed("💥 API MULTIPART EXCEPTION");
       printRed("URL        : $url");
       printRed("ERROR      : $e");
-
       await saveData('${urlRef}_STATE', 3, SharedPreferenceIOType.INTEGER);
-
       return RestResponse.failed;
     }
   }
@@ -926,18 +797,14 @@ class AppSettings {
     printBlue("FIELDS     : $fields");
     printBlue("FILES      : ${files.map((e) => e['field']).toList()}");
     printBlue("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-
     final bool internet = await internetConnectivityCheck();
-
     if (!internet) {
       printRed("❌ NO INTERNET CONNECTION");
       displayLongErrorToast("No Internet Connection");
       return RestResponse.failed;
     }
-
     try {
       final headersMap = requestHeaders ?? await headers();
-
       final request = http.MultipartRequest('POST', Uri.parse(url));
 
       /// 🔹 Headers (do NOT set content-type manually)
@@ -958,13 +825,10 @@ class AppSettings {
           );
         }
       }
-
       final streamedResponse = await request.send().timeout(
         const Duration(seconds: 30),
       );
-
       final response = await http.Response.fromStream(streamedResponse);
-
       printBlue("STATUS CODE: ${response.statusCode}");
 
       /// ---------------- SUCCESS ----------------
@@ -972,21 +836,17 @@ class AppSettings {
         printGreen("✅ API MULTIPART SUCCESS");
         printGreen("RESPONSE   : ${response.body}");
         printGreen("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-
         await saveData(
           '${urlRef}_TIME',
           DateTime.now().millisecondsSinceEpoch,
           SharedPreferenceIOType.INTEGER,
         );
-
         await saveData('${urlRef}_STATE', 1, SharedPreferenceIOType.INTEGER);
-
         await saveData(
           '${urlRef}_DATA',
           response.body,
           SharedPreferenceIOType.STRING,
         );
-
         return response.body;
       }
       /// ---------------- CLIENT ERROR ----------------
@@ -995,15 +855,12 @@ class AppSettings {
         printRed("STATUS     : ${response.statusCode}");
         printRed("RESPONSE   : ${response.body}");
         printRed("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-
         await saveData('${urlRef}_STATE', 2, SharedPreferenceIOType.INTEGER);
-
         await saveData(
           '${urlRef}_DATA',
           response.body,
           SharedPreferenceIOType.STRING,
         );
-
         return response.body;
       }
       /// ---------------- SERVER ERROR ----------------
@@ -1011,15 +868,12 @@ class AppSettings {
         printRed("❌ API SERVER ERROR");
         printRed("STATUS     : ${response.statusCode}");
         printRed("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-
         await saveData('${urlRef}_STATE', 3, SharedPreferenceIOType.INTEGER);
-
         await saveData(
           '${urlRef}_DATA',
           'SERVER_ERROR',
           SharedPreferenceIOType.STRING,
         );
-
         return RestResponse.SERVERNOTRESPONDING;
       }
     } catch (e, s) {
@@ -1176,43 +1030,6 @@ class AppSettings {
   //     );
   //   }
   // }
-
-  static Future<String?> _fetchDownloadUrlById(String id) async {
-    try {
-      final uri = Uri.parse(
-        'https://dev.quantixbiz.com/support_ticket/ticket-attach-download/$id',
-      );
-
-      printBlue('🌐 Fetching download URL for attachmentId: $id');
-
-      final response = await http.get(uri, headers: await headers());
-
-      if (response.statusCode != 200) {
-        printRed('❌ URL fetch failed. Status: ${response.statusCode}');
-        return null;
-      }
-
-      final decoded = jsonDecode(response.body);
-
-      if (decoded['status'] != 'success') {
-        printRed('❌ API returned failure');
-        return null;
-      }
-
-      final String? downloadUrl = decoded['data']?['download_url'];
-
-      if (downloadUrl == null || downloadUrl.isEmpty) {
-        printRed('❌ download_url missing in response');
-        return null;
-      }
-
-      printGreen('✅ Download URL resolved: $downloadUrl');
-      return downloadUrl;
-    } catch (e) {
-      printRed('❌ Exception while fetching URL: $e');
-      return null;
-    }
-  }
 
   static Future<void> logout({required BuildContext context}) async {
     printBlue("🚪 Logout started");
@@ -1439,26 +1256,26 @@ class ApplicationCoreInfo {
       "USER_TOKEN",
       SharedPreferenceIOType.STRING,
     );
-    kyc_from_filled = await AppSettings.getData(
-      "KYC_FROM_FILLED",
-      SharedPreferenceIOType.BOOL,
-    );
-    argo_from_filled = await AppSettings.getData(
-      "ARGO_FROM_FILLED",
-      SharedPreferenceIOType.BOOL,
-    );
-    email_verified = await AppSettings.getData(
-      "EMAIL_VERIFIED",
-      SharedPreferenceIOType.BOOL,
-    );
-    mobile_verified = await AppSettings.getData(
-      "MOBILE_VERIFIED",
-      SharedPreferenceIOType.BOOL,
-    );
-    profile_complited = await AppSettings.getData(
-      "PROFILE_COMPLITED",
-      SharedPreferenceIOType.BOOL,
-    );
+    // kyc_from_filled = await AppSettings.getData(
+    //   "KYC_FROM_FILLED",
+    //   SharedPreferenceIOType.BOOL,
+    // );
+    // argo_from_filled = await AppSettings.getData(
+    //   "ARGO_FROM_FILLED",
+    //   SharedPreferenceIOType.BOOL,
+    // );
+    // email_verified = await AppSettings.getData(
+    //   "EMAIL_VERIFIED",
+    //   SharedPreferenceIOType.BOOL,
+    // );
+    // mobile_verified = await AppSettings.getData(
+    //   "MOBILE_VERIFIED",
+    //   SharedPreferenceIOType.BOOL,
+    // );
+    // profile_complited = await AppSettings.getData(
+    //   "PROFILE_COMPLITED",
+    //   SharedPreferenceIOType.BOOL,
+    // );
 
     /// aap data clear or reload for this method
   }

@@ -67,13 +67,12 @@ class AppTheme {
         hintStyle: TextStyle(color: AppColors.primaryColor.withOpacity(0.5)),
       ),
 
-      colorScheme:
-          ColorScheme.fromSwatch(
-            primarySwatch: AppColors.primarySwatch,
-          ).copyWith(
-            primary: AppColors.primaryColor,
-            secondary: AppColors.primaryColor,
-          ),
+      colorScheme: ColorScheme.fromSwatch(
+        primarySwatch: AppColors.primarySwatch,
+      ).copyWith(
+        primary: AppColors.primaryColor,
+        secondary: AppColors.primaryColor,
+      ),
 
       textTheme: Theme.of(context).textTheme.apply(
         bodyColor: Colors.black87,
@@ -82,7 +81,6 @@ class AppTheme {
     );
   }
 
-  /// Dark Theme
   static ThemeData darkTheme(BuildContext context) {
     return ThemeData.dark().copyWith(
       primaryColor: AppColors.primarySwatch[700],
