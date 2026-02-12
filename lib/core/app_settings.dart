@@ -104,6 +104,8 @@ class AppSettings {
       'CHANGE_PASSWORD_TIME': 0,
       "SCAN-IMAGE": '$authPathUri/scan-image',
       'SCAN-IMAGE_TIME': 0,
+      'GET_PLANT_LIST': '$authPathUri/get-user-plants',
+      'GET_PLANT_LIST_TIME': 0,
       "LOG_OUT": '$authPathUri/logout',
       'LOG_OUT_TIME': 0,
     };

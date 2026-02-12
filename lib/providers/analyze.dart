@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:aiplantidentifier/core/app_settings.dart';
+import 'package:aiplantidentifier/models/plantlist_model.dart';
 import 'package:aiplantidentifier/models/sacnedimage_data_model.dart';
 import 'package:flutter/material.dart';
 
@@ -201,6 +202,69 @@ class PlantIdentificationProvider with ChangeNotifier {
       _scanerror = e.toString();
     } finally {
       _scanning = false;
+      notifyListeners();
+    }
+  }
+
+  bool _plantlistloading = false;
+  String _plantlisterror = "";
+  bool get plantlistloading => _plantlistloading;
+  String get plantlisterror => _plantlisterror;
+
+  PlantListModel? plantListModelresponce;
+
+  Future<void> fetchplantlist({bool forceReload = false}) async {
+    _plantlistloading = true;
+    _plantlisterror = "";
+    notifyListeners();
+
+    try {
+      final baseUrl = AppSettings.api['GET_PLANT_LIST'] ?? '';
+
+      if (baseUrl.isEmpty) {
+        throw Exception("GET_PLANT_LIST API not configured");
+      }
+      final urlWithParams = '$baseUrl';
+      bool shouldCallAPI =
+          await timeDifferenceInMinutes('GET_PLANT_LIST') || forceReload;
+      String apiData = '';
+
+      if (shouldCallAPI) {
+        await AppSettings.callRemoteGetAPI(
+          url: urlWithParams,
+          urlRef: 'GET_PLANT_LIST',
+        );
+        apiData = await AppSettings.getData(
+          'GET_PLANT_LIST_DATA',
+          SharedPreferenceIOType.STRING,
+        );
+      }
+      if (apiData.isEmpty) {
+        throw Exception("Empty profile response");
+      }
+      final decoded = jsonDecode(apiData);
+      final response = PlantListModel.fromJson(decoded);
+      plantListModelresponce = response;
+      if (response.success != true) {
+        throw Exception(response.message ?? "Something went wrong");
+      }
+      if (response.data != null) {
+        plantListModelresponce = response;
+        // final profile = response.data!;
+        // AppSettings.userLoginDetails.display_name = profile.name ?? "";
+        // AppSettings.userLoginDetails.Email = profile.email ?? "";
+        // AppSettings.userLoginDetails.Mobile_NUmber =
+        //     profile.phone?.toString() ?? "";
+
+        // await AppSettings.updateStoredPreferenceValues(
+        //   newData: AppSettings.userLoginDetails,
+        // );
+        notifyListeners();
+      }
+    } catch (e) {
+      _plantlisterror = e.toString();
+    } finally {
+      _plantlistloading = false;
       notifyListeners();
     }
   }
