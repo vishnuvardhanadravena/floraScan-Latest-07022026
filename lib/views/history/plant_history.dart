@@ -94,6 +94,7 @@ class _PlantHistoryScreenState extends State<PlantHistoryScreen> {
             children: [
               _searchBar(),
               Expanded(
+                
                 child:
                     filteredHistory.isEmpty
                         ? const Center(
