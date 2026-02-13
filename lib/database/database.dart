@@ -30,23 +30,26 @@ class DatabaseHelper {
     password: 'Bstore@9652',
     db: 'u679077773_flora_plants',
   );
+  // static Future<MySqlConnection> _getConnection() async {
+  //   if (_connection == null) {
+  //     _connection = await MySqlConnection.connect(_settings);
+  //     printGreen('✅ MySQL connected (new)');
+  //     return _connection!;
+  //   }
+  //   try {
+  //     await _connection!.query('SELECT 1');
+  //     return _connection!;
+  //   } catch (e) {
+  //     printRed('🔄 MySQL connection lost, reconnecting...');
+  //     try {
+  //       await _connection!.close();
+  //     } catch (_) {}
+  //     _connection = await MySqlConnection.connect(_settings);
+  //     return _connection!;
+  //   }
+  // }
   static Future<MySqlConnection> _getConnection() async {
-    if (_connection == null) {
-      _connection = await MySqlConnection.connect(_settings);
-      printGreen('✅ MySQL connected (new)');
-      return _connection!;
-    }
-    try {
-      await _connection!.query('SELECT 1');
-      return _connection!;
-    } catch (e) {
-      printRed('🔄 MySQL connection lost, reconnecting...');
-      try {
-        await _connection!.close();
-      } catch (_) {}
-      _connection = await MySqlConnection.connect(_settings);
-      return _connection!;
-    }
+    return await MySqlConnection.connect(_settings);
   }
 
   static Future<void> close() async {
@@ -852,6 +855,7 @@ class DatabaseHelper {
 
   Future<void> _createPlantEntriesTableIfNotExists() async {
     const tag = '[DB_CREATE]';
+
     final conn = await _getConnection();
 
     debugPrint('$tag 🔍 Checking if plant_entries table exists...');
