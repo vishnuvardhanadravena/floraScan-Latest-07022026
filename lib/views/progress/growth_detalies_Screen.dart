@@ -8,9 +8,9 @@ import 'package:aiplantidentifier/views/progress/plant_progress.dart';
 import 'package:flutter/material.dart';
 
 class GrowthDetaliesScreen extends StatefulWidget {
-  final PlantGroewth plant;
+  final String plant_id;
 
-  const GrowthDetaliesScreen({super.key, required this.plant});
+  const GrowthDetaliesScreen({super.key, required this.plant_id});
 
   @override
   State<GrowthDetaliesScreen> createState() => _GrowthDetaliesScreenState();
@@ -52,7 +52,7 @@ class _GrowthDetaliesScreenState extends State<GrowthDetaliesScreen>
     final width = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      backgroundColor:  const Color.fromARGB(205, 255, 255, 255),
+      backgroundColor: const Color.fromARGB(205, 255, 255, 255),
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -73,8 +73,11 @@ class _GrowthDetaliesScreenState extends State<GrowthDetaliesScreen>
             child: TabBarView(
               controller: _tabController,
               children: [
-                PlantProgressTab(growthProgressJson: progressJson,plnat:  widget.plant),
-                PlantInsightsTab(plantData: insights,plnat: widget.plant),
+                PlantProgressTab(
+                  growthProgressJson: progressJson,
+                  plnat: widget.plant,
+                ),
+                PlantInsightsTab(plantData: insights, plnat: widget.plant),
               ],
             ),
           ),

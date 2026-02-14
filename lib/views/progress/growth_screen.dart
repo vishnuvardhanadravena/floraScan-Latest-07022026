@@ -6,6 +6,7 @@ import 'package:aiplantidentifier/utils/helper_methodes.dart';
 import 'package:aiplantidentifier/utils/loader.dart';
 import 'package:aiplantidentifier/utils/sarech_bar.dart';
 import 'package:aiplantidentifier/views/mainscrens/mainscreen.dart';
+import 'package:aiplantidentifier/views/progress/growth_detalies_Screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -195,13 +196,13 @@ class _GrowthScreenState extends State<GrowthScreen> {
       margin: const EdgeInsets.only(bottom: 14),
       decoration: _cardDecoration(radius: 16),
       child: InkWell(
-        // onTap:
-        // () => Navigator.push(
-        //   context,
-        //   MaterialPageRoute(
-        //     builder: (_) => GrowthDetaliesScreen(plant: plant),
-        //   ),
-        // ),
+        onTap:
+        () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => GrowthDetaliesScreen(plant: plant),
+          ),
+        ),
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(12),
