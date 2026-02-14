@@ -1,15 +1,14 @@
 import 'dart:typed_data';
 
-import 'package:aiplantidentifier/models/plant_growth.dart';
+import 'package:aiplantidentifier/models/plantlist_model.dart';
 import 'package:aiplantidentifier/utils/app_colors.dart';
 import 'package:aiplantidentifier/utils/helper_methodes.dart';
 import 'package:aiplantidentifier/utils/loader.dart';
 import 'package:aiplantidentifier/utils/sarech_bar.dart';
 import 'package:aiplantidentifier/views/mainscrens/mainscreen.dart';
-import 'package:aiplantidentifier/views/progress/growth_detalies_Screen.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 import '../../database/database.dart';
 import '../../providers/analyze.dart';
@@ -24,31 +23,24 @@ class GrowthScreen extends StatefulWidget {
 class _GrowthScreenState extends State<GrowthScreen> {
   final TextEditingController searchController = TextEditingController();
   String _searchQuery = '';
-
-  List<PlantGroewth> _mapFromProvider(List<Map<dynamic, dynamic>> history) {
-    return history.map((e) {
-      return PlantGroewth(
-        data: e[DatabaseHelper.columnResult] ?? '',
-        id: e[DatabaseHelper.columnId].toString(),
-        name: e[DatabaseHelper.columnName] ?? 'Unknown Plant',
-        status: _mapHealthStatus(e[DatabaseHelper.columnHealthStatus]),
-        stage: _mapStage(e[DatabaseHelper.columnHealthStatus]),
-        imagePath: e[DatabaseHelper.columnImagePath] ?? '',
-        lastUpdate: DateTime.fromMillisecondsSinceEpoch(
-          e[DatabaseHelper.columnTimestamp],
-        ),
-      );
-    }).toList();
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<PlantIdentificationProvider>().fetchplantlist();
+    });
   }
 
-  List<PlantGroewth> _filterPlants(List<PlantGroewth> plants) {
-    if (_searchQuery.isEmpty) {
-      return plants;
-    }
+  List<Plantlist> _filterPlants(List<Plantlist> plants) {
+    if (_searchQuery.isEmpty) return plants;
+
+    final query = _searchQuery.toLowerCase();
+
     return plants.where((plant) {
-      return plant.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          plant.status.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          plant.stage.toLowerCase().contains(_searchQuery.toLowerCase());
+      return (plant.plantname ?? '').toLowerCase().contains(query) ||
+          (plant.overallHealth ?? '').toLowerCase().contains(query) ||
+          (plant.overallStatus ?? '').toLowerCase().contains(query) ||
+          (plant.planttype ?? '').toLowerCase().contains(query);
     }).toList();
   }
 
@@ -85,9 +77,20 @@ class _GrowthScreenState extends State<GrowthScreen> {
   Widget build(BuildContext context) {
     return Consumer<PlantIdentificationProvider>(
       builder: (context, provider, _) {
-        final plants = _mapFromProvider(provider.identificationHistory);
+        final plants = provider.plantListModelresponce?.data ?? [];
         final filteredPlants = _filterPlants(plants);
+        ;
+        if (provider.plantlistloading) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
+        if (provider.plantlistloading) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
         return Scaffold(
           // drawer: AnimatedAppDrawer(rootContext: context),
           drawer: TelegramStyleDrawer(rootContext: context),
@@ -118,7 +121,7 @@ class _GrowthScreenState extends State<GrowthScreen> {
     );
   }
 
-  Widget _buildPlantList(List<PlantGroewth> filteredPlants, int totalPlants) {
+  Widget _buildPlantList(List<Plantlist> filteredPlants, int totalPlants) {
     return Column(
       children: [
         _searchBar(),
@@ -159,7 +162,7 @@ class _GrowthScreenState extends State<GrowthScreen> {
                     itemCount: filteredPlants.length,
                     itemBuilder: (context, index) {
                       printGreen(
-                        'Building plant card for: ${filteredPlants[index].data}',
+                        'Building plant card for: ${filteredPlants[index]}',
                       );
                       return _buildPlantCard(filteredPlants[index]);
                     },
@@ -187,24 +190,24 @@ class _GrowthScreenState extends State<GrowthScreen> {
     );
   }
 
-  Widget _buildPlantCard(PlantGroewth plant) {
+  Widget _buildPlantCard(Plantlist plant) {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: _cardDecoration(radius: 16),
       child: InkWell(
-        onTap:
-            () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => GrowthDetaliesScreen(plant: plant),
-              ),
-            ),
+        // onTap:
+        // () => Navigator.push(
+        //   context,
+        //   MaterialPageRoute(
+        //     builder: (_) => GrowthDetaliesScreen(plant: plant),
+        //   ),
+        // ),
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              _plantImage(plant.id),
+              _plantImage(plant.plantimage ?? ""),
               const SizedBox(width: 14),
               Expanded(child: _plantInfo(plant)),
               const Icon(Icons.chevron_right),
@@ -215,49 +218,40 @@ class _GrowthScreenState extends State<GrowthScreen> {
     );
   }
 
-  Widget _plantImage(String plantId) {
+  Widget _plantImage(String img) {
     return SizedBox(
       width: 64,
       height: 64,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        child: FutureBuilder<Uint8List?>(
-          future: DatabaseHelper.instance.getIdentificationImage(
-            int.parse(plantId),
-          ),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Container(
-                color: Colors.grey.shade200,
-                child: const Center(
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: AppColors.primarySwatch,
-                  ),
-                ),
-              );
-            }
-
-            if (snapshot.hasData && snapshot.data != null) {
-              return Image.memory(snapshot.data!, fit: BoxFit.cover);
-            }
-
-            return Container(
-              color: Colors.grey.shade200,
-              child: const Icon(Icons.local_florist),
-            );
-          },
-        ),
+        child: Image.network(img, fit: BoxFit.cover),
       ),
     );
   }
 
-  Widget _plantInfo(PlantGroewth plant) {
+  Widget _plantInfo(Plantlist plant) {
+    DateTime? date;
+
+    final rawValue = plant.scandateandtime;
+
+    if (rawValue != null && rawValue.isNotEmpty) {
+      try {
+        final cleaned = rawValue.split(' (').first;
+        final formatted = cleaned.replaceAll('GMT', '');
+        date =
+            DateFormat(
+              "EEE MMM dd yyyy HH:mm:ss 'GMT'Z",
+            ).parse(rawValue, true).toLocal();
+      } catch (e) {
+        date = null;
+      }
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          plant.name,
+          plant.plantname ?? "",
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(
@@ -271,16 +265,20 @@ class _GrowthScreenState extends State<GrowthScreen> {
           spacing: 6,
           children: [
             _tag(
-              plant.status,
-              _statusBg(plant.status),
-              _statusFg(plant.status),
+              plant.overallHealth ?? "Healthy",
+              _statusBg(plant.overallHealth ?? "Healthy"),
+              _statusFg(plant.overallHealth ?? "Healthy"),
             ),
-            _tag(plant.stage, _stageBg(plant.stage), _stageFg(plant.stage)),
+            _tag(
+              plant.overallStatus ?? "Growing",
+              _stageBg(plant.overallStatus ?? "Mature"),
+              _stageFg(plant.overallStatus ?? "Mature"),
+            ),
           ],
         ),
         const SizedBox(height: 6),
         Text(
-          'Last update: ${DateFormat('MMM d, yyyy').format(plant.lastUpdate)}',
+          'Last update: ${date}',
           style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
         ),
       ],

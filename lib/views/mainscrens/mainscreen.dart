@@ -1,5 +1,6 @@
 import 'package:aiplantidentifier/core/app_settings.dart';
 import 'package:aiplantidentifier/main.dart';
+import 'package:aiplantidentifier/providers/analyze.dart';
 import 'package:aiplantidentifier/providers/profile_provider.dart';
 import 'package:aiplantidentifier/utils/app_Toast.dart';
 import 'package:aiplantidentifier/utils/helper_methodes.dart';
@@ -222,9 +223,12 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     }
     setState(() {
       _isChatOpen = false;
+      _currentIndex = index;
     });
-
-    setState(() => _currentIndex = index);
+    if (index == 1) {
+      final context = _navigatorKeys[index].currentContext;
+      context?.read<PlantIdentificationProvider>().fetchplantlist();
+    }
     HapticFeedback.selectionClick();
   }
 

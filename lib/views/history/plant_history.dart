@@ -13,6 +13,7 @@ import '../../database/database.dart';
 import '../../models/hyderation.dart';
 import '../../providers/analyze.dart';
 import '../../utils/sarech_bar.dart';
+import 'package:shimmer/shimmer.dart';
 
 class PlantHistoryScreen extends StatefulWidget {
   const PlantHistoryScreen({super.key});
@@ -76,7 +77,11 @@ class _PlantHistoryScreenState extends State<PlantHistoryScreen> {
       ),
       body: Consumer<PlantIdentificationProvider>(
         builder: (context, provider, _) {
-          if (provider.plantListModelresponce!.data!.isEmpty) {
+          if (provider.plantlistloading) {
+            return const PlantHistoryShimmer();
+          }
+
+          if (provider.plantListModelresponce == null) {
             return EmptyStateWidgett(
               imageAsset: 'images/error_plant.png',
               title: 'No Plant Data Yet',
@@ -94,7 +99,6 @@ class _PlantHistoryScreenState extends State<PlantHistoryScreen> {
             children: [
               _searchBar(),
               Expanded(
-                
                 child:
                     filteredHistory.isEmpty
                         ? const Center(
@@ -104,7 +108,7 @@ class _PlantHistoryScreenState extends State<PlantHistoryScreen> {
                           ),
                         )
                         : ListView.builder(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(13),
                           itemCount: filteredHistory.length,
                           itemBuilder: (context, index) {
                             final entry = filteredHistory[index];
@@ -129,13 +133,11 @@ class _PlantHistoryScreenState extends State<PlantHistoryScreen> {
     final rawValue = plant.scandateandtime;
 
     if (rawValue != null && rawValue.isNotEmpty) {
-      // Try milliseconds
       final millis = int.tryParse(rawValue);
 
       if (millis != null) {
         date = DateTime.fromMillisecondsSinceEpoch(millis);
       } else {
-        // Try ISO string
         date = DateTime.tryParse(rawValue)?.toLocal();
       }
     }
@@ -148,7 +150,7 @@ class _PlantHistoryScreenState extends State<PlantHistoryScreen> {
       confidence = double.tryParse(plant.confidence as String) ?? 0.0;
     }
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 4),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -157,7 +159,7 @@ class _PlantHistoryScreenState extends State<PlantHistoryScreen> {
         ],
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.all(12),
+        contentPadding: const EdgeInsets.all(10),
         leading: ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child:
@@ -230,260 +232,132 @@ class _PlantHistoryScreenState extends State<PlantHistoryScreen> {
         ),
         trailing: const Icon(Icons.chevron_right),
         onTap: () {
-          // Navigator.push(
-          //   context,
-          //   MaterialPageRoute(
-          //     builder:
-          //         (_) => PlantIdentificationDetailScreen(
-          //           entry: entry,
-          //           imageBytes: imageBytes,
-          //         ),
-          //   ),
-          // );
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (_) => PlantIdentificationDetailScreen(
+                    plant_id: plant.sId ?? "",
+                  ),
+            ),
+          );
         },
       ),
     );
   }
 }
 
-// import 'package:aiplantidentifier/models/plantlist_model.dart';
-// import 'package:aiplantidentifier/providers/analyze.dart';
-// import 'package:aiplantidentifier/views/mainscrens/mainscreen.dart';
-// import 'package:flutter/material.dart';
-// import 'package:intl/intl.dart';
-// import 'package:provider/provider.dart';
+class PlantHistoryShimmer extends StatelessWidget {
+  const PlantHistoryShimmer({super.key});
 
-// class PlantHistoryScreen extends StatefulWidget {
-//   const PlantHistoryScreen({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color.fromARGB(205, 255, 255, 255),
+      body: Shimmer.fromColors(
+        baseColor: const Color(0xFFE8F5E9),
+        highlightColor: const Color(0xFFF1F8E9),
+        child: Column(
+          children: [
+            // 🔹 Search Bar Shimmer
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Container(
+                height: 50,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
 
-//   @override
-//   State<PlantHistoryScreen> createState() => _PlantHistoryScreenState();
-// }
+            // 🔹 List Shimmer
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(13),
+                itemCount: 6,
+                itemBuilder: (_, __) => _buildShimmerCard(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
-// class _PlantHistoryScreenState extends State<PlantHistoryScreen> {
-//   final TextEditingController searchController = TextEditingController();
-//   String _searchQuery = '';
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     WidgetsBinding.instance.addPostFrameCallback((_) {
-//       context.read<PlantIdentificationProvider>().fetchplantlist();
-//     });
-//   }
-
-//   List<Plantlist> _filterHistory(List<Plantlist> history) {
-//     final query = _searchQuery.trim().toLowerCase();
-//     if (query.isEmpty) return history;
-
-//     return history.where((plant) {
-//       final name = plant.plantname?.toLowerCase() ?? '';
-//       final type = plant.planttype?.toLowerCase() ?? '';
-//       return name.contains(query) || type.contains(query);
-//     }).toList();
-//   }
-
-//   @override
-//   void dispose() {
-//     searchController.dispose();
-//     super.dispose();
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       drawer: TelegramStyleDrawer(rootContext: context),
-//       backgroundColor: const Color(0xFFF4F7F6),
-//       body: Consumer<PlantIdentificationProvider>(
-//         builder: (context, provider, _) {
-//           if (provider.plantlistloading) {
-//             return const Center(child: CircularProgressIndicator());
-//           }
-
-//           if (provider.plantlisterror.isNotEmpty) {
-//             return Center(
-//               child: Text(
-//                 provider.plantlisterror,
-//                 style: const TextStyle(color: Colors.red),
-//               ),
-//             );
-//           }
-
-//           final plantList = provider.plantListModelresponce?.data ?? [];
-
-//           if (plantList.isEmpty) {
-//             return const Center(child: Text("No Plant History Found"));
-//           }
-
-//           final filteredList = _filterHistory(plantList);
-
-//           return RefreshIndicator(
-//             onRefresh: () async {
-//               await provider.fetchplantlist(forceReload: true);
-//             },
-//             child: CustomScrollView(
-//               slivers: [
-//                 _buildHeader(),
-//                 SliverToBoxAdapter(child: _buildSearchBar()),
-//                 SliverPadding(
-//                   padding: const EdgeInsets.all(16),
-//                   sliver: SliverList(
-//                     delegate: SliverChildBuilderDelegate((context, index) {
-//                       final plant = filteredList[index];
-//                       return _buildPlantCard(context, plant);
-//                     }, childCount: filteredList.length),
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           );
-//         },
-//       ),
-//     );
-//   }
-
-//   // ================= HEADER =================
-
-//   Widget _buildHeader() {
-//     return SliverAppBar(
-//       expandedHeight: 120,
-//       floating: false,
-//       pinned: true,
-//       flexibleSpace: Container(
-//         decoration: const BoxDecoration(
-//           gradient: LinearGradient(
-//             colors: [Color(0xFF2D6A4F), Color(0xFF40916C)],
-//             begin: Alignment.topLeft,
-//             end: Alignment.bottomRight,
-//           ),
-//         ),
-//         alignment: Alignment.centerLeft,
-//         padding: const EdgeInsets.symmetric(horizontal: 16),
-//         child: const Text(
-//           "Plant Identification History",
-//           style: TextStyle(
-//             color: Colors.white,
-//             fontSize: 20,
-//             fontWeight: FontWeight.w600,
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-
-//   // ================= SEARCH =================
-
-//   Widget _buildSearchBar() {
-//     return Padding(
-//       padding: const EdgeInsets.all(16),
-//       child: TextField(
-//         controller: searchController,
-//         onChanged: (value) {
-//           setState(() => _searchQuery = value);
-//         },
-//         decoration: InputDecoration(
-//           hintText: "Search plants...",
-//           prefixIcon: const Icon(Icons.search),
-//           filled: true,
-//           fillColor: Colors.white,
-//           border: OutlineInputBorder(
-//             borderRadius: BorderRadius.circular(14),
-//             borderSide: BorderSide.none,
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-
-//   // ================= CARD =================
-
-//   Widget _buildPlantCard(BuildContext context, Plantlist plant) {
-//     DateTime? date;
-//     try {
-//       date = DateTime.parse(plant.scandateandtime ?? '');
-//     } catch (_) {}
-
-//     return Container(
-//       margin: const EdgeInsets.only(bottom: 14),
-//       padding: const EdgeInsets.all(14),
-//       decoration: BoxDecoration(
-//         color: Colors.white,
-//         borderRadius: BorderRadius.circular(18),
-//         boxShadow: [
-//           BoxShadow(
-//             color: Colors.black.withOpacity(0.05),
-//             blurRadius: 12,
-//             offset: const Offset(0, 6),
-//           ),
-//         ],
-//       ),
-//       child: Row(
-//         children: [
-//           ClipRRect(
-//             borderRadius: BorderRadius.circular(14),
-//             child:
-//                 plant.plantimage != null && plant.plantimage!.isNotEmpty
-//                     ? Image.network(
-//                       plant.plantimage!,
-//                       width: 75,
-//                       height: 75,
-//                       fit: BoxFit.cover,
-//                     )
-//                     : const Icon(Icons.local_florist, size: 60),
-//           ),
-//           const SizedBox(width: 16),
-//           Expanded(
-//             child: Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 Text(
-//                   plant.plantname ?? "Unknown Plant",
-//                   style: const TextStyle(
-//                     fontSize: 17,
-//                     fontWeight: FontWeight.w600,
-//                   ),
-//                 ),
-//                 const SizedBox(height: 6),
-//                 if (date != null)
-//                   Text(
-//                     DateFormat('MMM d, hh:mm a').format(date),
-//                     style: const TextStyle(fontSize: 12, color: Colors.grey),
-//                   ),
-//                 const SizedBox(height: 10),
-//                 Row(
-//                   children: [
-//                     _chip(
-//                       "${((plant.confidence ?? 0) * 100).toStringAsFixed(0)}%",
-//                       const Color(0xFF2D6A4F),
-//                     ),
-//                     const SizedBox(width: 8),
-//                     _chip(plant.planttype ?? "N/A", Colors.grey.shade700),
-//                   ],
-//                 ),
-//               ],
-//             ),
-//           ),
-//           const Icon(Icons.chevron_right),
-//         ],
-//       ),
-//     );
-//   }
-
-//   Widget _chip(String text, Color color) {
-//     return Container(
-//       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-//       decoration: BoxDecoration(
-//         color: color.withOpacity(0.12),
-//         borderRadius: BorderRadius.circular(20),
-//       ),
-//       child: Text(
-//         text,
-//         style: TextStyle(
-//           fontSize: 11,
-//           fontWeight: FontWeight.w600,
-//           color: color,
-//         ),
-//       ),
-//     );
-//   }
-// }
+Widget _buildShimmerCard() {
+  return Container(
+    margin: const EdgeInsets.only(bottom: 4),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      boxShadow: [
+        BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8),
+      ],
+    ),
+    child: ListTile(
+      contentPadding: const EdgeInsets.all(10),
+      leading: Shimmer.fromColors(
+        baseColor: Colors.grey.shade300,
+        highlightColor: Colors.grey.shade100,
+        child: Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            color: Colors.grey,
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      ),
+      title: Shimmer.fromColors(
+        baseColor: Colors.grey.shade300,
+        highlightColor: Colors.grey.shade100,
+        child: Container(
+          height: 14,
+          width: double.infinity,
+          color: Colors.grey,
+        ),
+      ),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 8),
+          Shimmer.fromColors(
+            baseColor: Colors.grey.shade300,
+            highlightColor: Colors.grey.shade100,
+            child: Container(height: 10, width: 120, color: Colors.grey),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Shimmer.fromColors(
+                baseColor: Colors.grey.shade300,
+                highlightColor: Colors.grey.shade100,
+                child: Container(height: 12, width: 40, color: Colors.grey),
+              ),
+              const SizedBox(width: 8),
+              Shimmer.fromColors(
+                baseColor: Colors.grey.shade300,
+                highlightColor: Colors.grey.shade100,
+                child: Container(
+                  height: 18,
+                  width: 60,
+                  decoration: BoxDecoration(
+                    color: Colors.grey,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      trailing: Shimmer.fromColors(
+        baseColor: Colors.grey.shade300,
+        highlightColor: Colors.grey.shade100,
+        child: Container(width: 20, height: 20, color: Colors.grey),
+      ),
+    ),
+  );
+}

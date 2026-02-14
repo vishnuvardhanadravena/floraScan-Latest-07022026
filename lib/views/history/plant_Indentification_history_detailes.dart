@@ -1,17 +1,16 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:aiplantidentifier/models/plant_history.dart';
+import 'package:aiplantidentifier/providers/plant_history_provider.dart';
 import 'package:aiplantidentifier/utils/loader.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
+import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
 
 class PlantIdentificationDetailScreen extends StatefulWidget {
-  final Map<String, dynamic> entry;
-  final Uint8List? imageBytes;
-
-  const PlantIdentificationDetailScreen({
-    super.key,
-    required this.entry,
-    required this.imageBytes,
-  });
+  final String plant_id;
+  const PlantIdentificationDetailScreen({super.key, required this.plant_id});
 
   @override
   State<PlantIdentificationDetailScreen> createState() =>
@@ -22,73 +21,23 @@ class _PlantIdentificationDetailScreenState
     extends State<PlantIdentificationDetailScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  late Map<String, dynamic> bio;
-  late Map<String, dynamic> care;
+  HistoryDetailes? selectedData;
+  PlantBio? plantBio;
+  PlantCare? plantCare;
 
   @override
   void initState() {
     super.initState();
+
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
       setState(() {});
     });
 
-    final raw = jsonDecode(widget.entry['result'] ?? '{}');
-
-    bio = {
-      "name": raw["common_name"],
-      "scientific": raw["scientific_name"],
-      "category": raw["category"],
-      "growth_habit": raw["growth_habit"],
-      "overview": raw["description"],
-      "origin_region": raw["native_region"],
-      "origin_habitat": raw["natural_habitat"],
-      "leaf_shape": raw["leaf_shape"],
-      "growth_pattern": raw["growth_pattern"],
-      "growth_speed": raw["growth_rate"],
-      "best_for": raw["best_for"],
-      "benefits": raw["benefits"] is List ? raw["benefits"] : [],
-      "toxic_pets": (raw["toxicity_level"] ?? 0) > 2,
-      "toxic_humans":
-          (raw["toxicity_level"] ?? 0) > 2
-              ? "Toxic - avoid ingestion"
-              : "Generally safe",
-    };
-
-    care = {
-      "water": {
-        "frequency":
-            raw["water_needs"] != null
-                ? "Water level ${raw["water_needs"]}/10"
-                : null,
-        "notes": raw["water_notes"],
-      },
-      "sunlight": {
-        "frequency":
-            raw["sunlight_needs"] != null
-                ? "Sunlight level ${raw["sunlight_needs"]}/10"
-                : null,
-        "notes": raw["sunlight_notes"],
-      },
-      "soil": raw["soil_type"],
-      "temperature": {
-        "range": raw["temperature_range"],
-        "notes": raw["temperature_notes"],
-      },
-      "humidity": {
-        "level": raw["humidity_level"],
-        "notes": raw["humidity_notes"],
-      },
-      "fertilizer": {
-        "frequency": raw["fertilizer_frequency"],
-        "notes": raw["fertilizer_notes"],
-      },
-      "pruning":
-          raw["care_tips"] is List
-              ? (raw["care_tips"] as List).join("\n")
-              : raw["care_tips"],
-      "common_issues": raw["common_issues"] is List ? raw["common_issues"] : [],
-    };
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final provider = context.read<PlantHistoryProvider>();
+      await provider.fetchDetailes(plant_id: widget.plant_id);
+    });
   }
 
   @override
@@ -101,14 +50,120 @@ class _PlantIdentificationDetailScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
-      body: Column(
+      body: Consumer<PlantHistoryProvider>(
+        builder: (context, plantHistoryProvider, child) {
+          if (plantHistoryProvider.plant_history_loading) {
+            return const PlantDetailShimmer();
+          }
+
+          if (plantHistoryProvider.plant_list_error.isNotEmpty) {
+            return Container(
+              child: Column(
+                children: [
+                  Text("Something Went worng please try again later "),
+                  SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: () async {
+                      await plantHistoryProvider.fetchDetailes(
+                        plant_id: widget.plant_id,
+                      );
+                    },
+                    child: Text("Try Again "),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          selectedData =
+              plantHistoryProvider.historyDetilesResponce?.data?.first;
+          plantBio = selectedData?.history?.plantBio;
+          plantCare = selectedData?.history?.plantCare;
+
+          return Column(
+            children: [
+              _header(plantHistoryProvider),
+              _title(plantHistoryProvider),
+              _tabs(),
+              Expanded(
+                child: SingleChildScrollView(
+                  child:
+                      _tabController.index == 0
+                          ? _plantBio(plantHistoryProvider)
+                          : _plantCare(plantHistoryProvider),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  // Widget _header(PlantHistoryProvider plantHistoryProvider) {
+  //   final screenWidth = MediaQuery.of(context).size.width;
+  //   final headerHeight = screenWidth * 0.6;
+
+  //   return Stack(
+  //     children: [
+  //       // widget.imageBytes != null
+  //       //     ? Image.memory(
+  //       //       widget.imageBytes!,
+  //       //       height: headerHeight,
+  //       //       width: double.infinity,
+  //       //       fit: BoxFit.cover,
+  //       //     )
+  //       //     : Container(
+  //       //       height: headerHeight,
+  //       //       color: Colors.grey[300],
+  //       //       child: const Icon(Icons.image, size: 80, color: Colors.grey),
+  //       //     ),
+  //       Positioned(
+  //         top: MediaQuery.of(context).padding.top + 8,
+  //         left: 12,
+  //         child: CircleAvatar(
+  //           backgroundColor: Colors.white,
+  //           child: IconButton(
+  //             icon: const Icon(Icons.arrow_back, color: Colors.black),
+  //             onPressed: () => Navigator.pop(context),
+  //           ),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
+  Widget _header(PlantHistoryProvider provider) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final headerHeight = screenWidth * 0.6;
+
+    return SizedBox(
+      height: headerHeight,
+      width: double.infinity,
+      child: Stack(
         children: [
-          _header(),
-          _title(),
-          _tabs(),
-          Expanded(
-            child: SingleChildScrollView(
-              child: _tabController.index == 0 ? _plantBio() : _plantCare(),
+          if (provider.historyDetilesResponce?.data?.first.plantImage != null)
+            Image.network(
+              provider.historyDetilesResponce!.data!.first.plantImage!,
+              height: headerHeight,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            )
+          else
+            Container(
+              height: headerHeight,
+              width: double.infinity,
+              color: Colors.grey[300],
+            ),
+
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            left: 12,
+            child: CircleAvatar(
+              backgroundColor: Colors.white,
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.black),
+                onPressed: () => Navigator.pop(context),
+              ),
             ),
           ),
         ],
@@ -116,41 +171,9 @@ class _PlantIdentificationDetailScreenState
     );
   }
 
-  Widget _header() {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final headerHeight = screenWidth * 0.6;
-
-    return Stack(
-      children: [
-        widget.imageBytes != null
-            ? Image.memory(
-              widget.imageBytes!,
-              height: headerHeight,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            )
-            : Container(
-              height: headerHeight,
-              color: Colors.grey[300],
-              child: const Icon(Icons.image, size: 80, color: Colors.grey),
-            ),
-        Positioned(
-          top: MediaQuery.of(context).padding.top + 8,
-          left: 12,
-          child: CircleAvatar(
-            backgroundColor: Colors.white,
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.black),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _title() {
-    if (bio["name"] == null && bio["scientific"] == null) {
+  Widget _title(PlantHistoryProvider plantHistoryProvider) {
+    if (plantBio?.plantInformation?.plantName == null &&
+        plantBio?.plantInformation?.scientificName == null) {
       return const SizedBox.shrink();
     }
 
@@ -158,7 +181,7 @@ class _PlantIdentificationDetailScreenState
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       child: Text(
-        '${bio["name"] ?? "Unknown Plant"}${bio["scientific"] != null ? " (${bio["scientific"]})" : ""}',
+        '${plantBio?.plantInformation?.plantName ?? "Unknown Plant"}${plantBio?.plantInformation?.scientificName != null ? " (${plantBio?.plantInformation?.scientificName})" : ""}',
         style: const TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.bold,
@@ -207,57 +230,63 @@ class _PlantIdentificationDetailScreenState
     );
   }
 
-  Widget _plantBio() {
+  Widget _plantBio(PlantHistoryProvider plantHistoryProvider) {
+    final plantname = plantBio?.plantInformation?.plantName;
+    final scientificName = plantBio?.plantInformation?.scientificName;
+    final category = plantBio?.plantInformation?.category;
+    final growthHabit = plantBio?.plantInformation?.growthHabit;
     return Column(
       children: [
-        if (_hasAnyValue([
-          bio["name"],
-          bio["scientific"],
-          bio["category"],
-          bio["growth_habit"],
-        ]))
+        if (_hasAnyValue([plantname, scientificName, category, growthHabit]))
           _card("Plant Information", [
-            if (bio["name"] != null || bio["scientific"] != null)
+            if (plantname != null || scientificName != null)
               _row(
                 "Plant Name",
-                '${bio["name"] ?? "Unknown"}${bio["scientific"] != null ? " (${bio["scientific"]})" : ""}',
+                '${plantname ?? "Unknown"}${scientificName != null ? " (${scientificName})" : ""}',
               ),
-            if (bio["category"] != null) _row("Category", bio["category"]),
-            if (bio["growth_habit"] != null)
-              _row("Growth Habit", bio["growth_habit"]),
+            if (category != null) _row("Category", category),
+            if (growthHabit != null) _row("Growth Habit", growthHabit),
           ]),
 
-        if (bio["overview"] != null)
-          _card("Plant Overview", [_text(bio["overview"])]),
+        if (plantBio?.plantOverview != null)
+          _card("Plant Overview", [_text(plantBio?.plantOverview)]),
 
-        if (_hasAnyValue([bio["origin_region"], bio["origin_habitat"]]))
+        if (_hasAnyValue([
+          plantBio?.originHabitat?.naativeRegion,
+          plantBio?.originHabitat?.naturalHabitat,
+        ]))
           _card("Origin & Habitat", [
-            if (bio["origin_region"] != null)
-              _row("Native Region", bio["origin_region"]),
-            if (bio["origin_habitat"] != null)
-              _row("Natural Habitat", bio["origin_habitat"]),
+            if (plantBio?.originHabitat?.naativeRegion != null)
+              _row("Native Region", plantBio?.originHabitat?.naativeRegion),
+            if (plantBio?.originHabitat?.naturalHabitat != null)
+              _row("Natural Habitat", plantBio?.originHabitat?.naturalHabitat),
           ]),
 
         if (_hasAnyValue([
-          bio["leaf_shape"],
-          bio["growth_pattern"],
-          bio["growth_speed"],
-          bio["best_for"],
+          plantBio?.keyCharacteristics?.leafShape,
+          plantBio?.keyCharacteristics?.growthPattern,
+          plantBio?.keyCharacteristics?.growthsSpeed,
+          plantBio?.keyCharacteristics?.bestFor,
         ]))
           _card("Key Characteristics", [
-            if (bio["leaf_shape"] != null)
-              _row("Leaf Shape", bio["leaf_shape"]),
-            if (bio["growth_pattern"] != null)
-              _row("Growth Pattern", bio["growth_pattern"]),
-            if (bio["growth_speed"] != null)
-              _row("Growth Speed", bio["growth_speed"]),
-            if (bio["best_for"] != null) _row("Best For", bio["best_for"]),
+            if (plantBio?.keyCharacteristics?.leafShape != null)
+              _row("Leaf Shape", plantBio?.keyCharacteristics?.leafShape),
+            if (plantBio?.keyCharacteristics?.growthPattern != null)
+              _row(
+                "Growth Pattern",
+                plantBio?.keyCharacteristics?.growthPattern,
+              ),
+            if (plantBio?.keyCharacteristics?.growthsSpeed != null)
+              _row("Growth Speed", plantBio?.keyCharacteristics?.growthsSpeed),
+            if (plantBio?.keyCharacteristics?.bestFor != null)
+              _row("Best For", plantBio?.keyCharacteristics?.bestFor),
           ]),
 
-        if (bio["benefits"] != null && (bio["benefits"] as List).isNotEmpty)
+        if (plantBio?.benefitsUses != null &&
+            (plantBio?.benefitsUses as List).isNotEmpty)
           _card(
             "Benefits & Uses",
-            (bio["benefits"] as List)
+            (plantBio?.benefitsUses ?? [])
                 .map<Widget>(
                   (e) => Padding(
                     padding: const EdgeInsets.symmetric(vertical: 2),
@@ -269,13 +298,26 @@ class _PlantIdentificationDetailScreenState
                 )
                 .toList(),
           ),
+        _card(
+          "Toxicity Info",
+          (plantBio?.toxicityInfo ?? [])
+              .map<Widget>(
+                (e) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Text(
+                    "• $e",
+                    style: const TextStyle(height: 1.4, color: Colors.black),
+                  ),
+                ),
+              )
+              .toList(),
+        ),
 
-        _card("Toxicity Info", [
-          _row("Toxic to pets", bio["toxic_pets"] ? "Yes (cats & dogs)" : "No"),
-          if (bio["toxic_humans"] != null)
-            _row("Safe for humans", bio["toxic_humans"]),
-        ]),
-
+        // _card("Toxicity Info", [
+        //   _row("Toxic to pets", bio["toxic_pets"] ? "Yes (cats & dogs)" : "No"),
+        //   if (bio["toxic_humans"] != null)
+        //     _row("Safe for humans", bio["toxic_humans"]),
+        // ]),
         const SizedBox(height: 16),
       ],
     );
@@ -319,92 +361,90 @@ class _PlantIdentificationDetailScreenState
     },
   };
 
-  Widget _plantCare() {
+  Widget _plantCare(PlantHistoryProvider plantHistoryProvider) {
     return Column(
       children: [
         if (_hasAnyValue([
-          care['water']?['frequency'],
-          care['water']?['notes'],
+          plantCare?.water?.waterLevel,
+          plantCare?.water?.waterNotes,
         ]))
           _careTile(
             icon: Icons.water_drop,
             color: Colors.blue,
             title: "Water",
-            heading: care['water']?['frequency'] ?? '',
-            description: care['water']?['notes'] ?? '',
+            heading: plantCare?.water?.waterLevel.toString() ?? '',
+            description: plantCare?.water?.waterNotes ?? '',
           ),
 
         if (_hasAnyValue([
-          care['sunlight']?['frequency'],
-          care['sunlight']?['notes'],
+          plantCare?.sunlight?.sunlightLevel.toString(),
+          plantCare?.sunlight?.sunlightNotes,
         ]))
           _careTile(
             icon: Icons.wb_sunny,
             color: Colors.orange,
             title: "Sunlight",
-            heading: care['sunlight']?['frequency'] ?? '',
-            description: care['sunlight']?['notes'] ?? '',
+            heading: plantCare?.sunlight?.sunlightLevel.toString() ?? '',
+            description: plantCare?.sunlight?.sunlightNotes ?? '',
           ),
 
-        if (care['soil'] != null)
-          _careTile(
-            icon: Icons.park,
-            color: Colors.brown,
-            title: "Soil",
-            heading: "Soil Type",
-            description: care['soil'],
-          ),
-
+        // if (care['soil'] != null)
+        //   _careTile(
+        //     icon: Icons.park,
+        //     color: Colors.brown,
+        //     title: "Soil",
+        //     heading: "Soil Type",
+        //     description: care['soil'],
+        //   ),
         if (_hasAnyValue([
-          care['temperature']?['range'],
-          care['temperature']?['notes'],
+          plantCare?.temparature?.temparatureRange.toString(),
+          plantCare?.temparature?.temparatureNotes,
         ]))
           _careTile(
             icon: Icons.thermostat,
             color: Colors.red,
             title: "Temperature",
-            heading: care['temperature']?['range'] ?? '',
-            description: care['temperature']?['notes'] ?? '',
+            heading: plantCare?.temparature?.temparatureRange ?? '',
+            description: plantCare?.temparature?.temparatureNotes ?? '',
           ),
 
         if (_hasAnyValue([
-          care['humidity']?['level'],
-          care['humidity']?['notes'],
+          plantCare?.humidity?.humidityLevel,
+          plantCare?.humidity?.humidityLevel,
         ]))
           _careTile(
             icon: Icons.water,
             color: Colors.cyan,
             title: "Humidity",
-            heading: care['humidity']?['level'] ?? '',
-            description: care['humidity']?['notes'] ?? '',
+            heading: plantCare?.humidity?.humidityLevel ?? '',
+            description: plantCare?.humidity?.humidityLevel ?? '',
           ),
 
         if (_hasAnyValue([
-          care['fertilizer']?['frequency'],
-          care['fertilizer']?['notes'],
+          plantCare?.fertilizer?.fertilizerFrequency,
+          plantCare?.fertilizer?.fertilizerNotes,
         ]))
           _careTile(
             icon: Icons.agriculture,
             color: Colors.green,
             title: "Fertilizer",
-            heading: care['fertilizer']?['frequency'] ?? '',
-            description: care['fertilizer']?['notes'] ?? '',
+            heading: plantCare?.fertilizer?.fertilizerFrequency ?? '',
+            description: plantCare?.fertilizer?.fertilizerNotes ?? '',
           ),
 
-        if (care['pruning'] != null)
-          _careTile(
-            icon: Icons.content_cut,
-            color: Colors.purple,
-            title: "Pruning",
-            heading: "Pruning Guide",
-            description: care['pruning'],
-          ),
-
-        if (care['common_issues'] != null &&
-            (care['common_issues'] as List).isNotEmpty)
+        // if (care['pruning'] != null)
+        //   _careTile(
+        //     icon: Icons.content_cut,
+        //     color: Colors.purple,
+        //     title: "Pruning",
+        //     heading: "Pruning Guide",
+        //     description: care['pruning'],
+        //   ),
+        if (plantCare?.commonIssues != null &&
+            plantCare!.commonIssues!.isNotEmpty)
           _careList(
             title: "Common Issues",
-            items: List<String>.from(care['common_issues']),
+            items: List<String>.from(plantCare?.commonIssues ?? []),
           ),
 
         const SizedBox(height: 16),
@@ -467,7 +507,7 @@ class _PlantIdentificationDetailScreenState
           if (heading.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
-              fixEmoji(heading),
+              heading,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 14,
@@ -620,5 +660,109 @@ class _PlantIdentificationDetailScreenState
       if (v is Map) return v.isNotEmpty;
       return true;
     });
+  }
+}
+
+class PlantDetailShimmer extends StatelessWidget {
+  const PlantDetailShimmer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final headerHeight = screenWidth * 0.6;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: Shimmer.fromColors(
+        baseColor: const Color(0xFFE8F5E9),
+        highlightColor: const Color(0xFFF1F8E9),
+        child: Column(
+          children: [
+            // 🔹 Header Image Shimmer
+            Container(
+              height: headerHeight,
+              width: double.infinity,
+              color: Colors.white,
+            ),
+
+            const SizedBox(height: 16),
+
+            // 🔹 Title Shimmer
+            Container(
+              height: 20,
+              width: 200,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(6),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // 🔹 Tabs Shimmer
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Expanded(child: _shimmerBox(height: 42)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _shimmerBox(height: 42)),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // 🔹 Cards Shimmer
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: List.generate(4, (index) => _shimmerCard()),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _shimmerCard() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Card Title
+          _shimmerBox(height: 16, width: 150),
+
+          const SizedBox(height: 12),
+
+          // Content lines
+          _shimmerBox(height: 12),
+          const SizedBox(height: 8),
+          _shimmerBox(height: 12),
+          const SizedBox(height: 8),
+          _shimmerBox(height: 12, width: 180),
+        ],
+      ),
+    );
+  }
+
+  Widget _shimmerBox({double height = 12, double? width}) {
+    return Container(
+      height: height,
+      width: width ?? double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(6),
+      ),
+    );
   }
 }
