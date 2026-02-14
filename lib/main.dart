@@ -1,6 +1,7 @@
 import 'package:aiplantidentifier/core/app_settings.dart';
 import 'package:aiplantidentifier/providers/analyze.dart';
 import 'package:aiplantidentifier/providers/auth_provider.dart';
+import 'package:aiplantidentifier/providers/plant_history_provider.dart';
 import 'package:aiplantidentifier/providers/profile_provider.dart';
 import 'package:aiplantidentifier/utils/helper_methodes.dart';
 import 'package:aiplantidentifier/utils/theame_data.dart';
@@ -29,6 +30,7 @@ Future<void> main() async {
           ChangeNotifierProvider(create: (_) => PlantProvider()),
           ChangeNotifierProvider(create: (_) => ForgotPasswordProvider()),
           ChangeNotifierProvider(create: (_) => ProfileProvider()),
+          ChangeNotifierProvider(create: (_) => PlantHistoryProvider()),
         ],
         child: MyApp(),
       ),

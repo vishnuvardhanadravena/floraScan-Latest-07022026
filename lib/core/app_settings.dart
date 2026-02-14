@@ -108,6 +108,8 @@ class AppSettings {
       'GET_PLANT_LIST_TIME': 0,
       "LOG_OUT": '$authPathUri/logout',
       'LOG_OUT_TIME': 0,
+      "GET_PLANT_DETAILES": '$authPathUri/get-histroy-of-plant',
+      'GET_PLANT_DETAILES_TIME': 0,
     };
   }
 
@@ -570,6 +572,16 @@ class AppSettings {
     }
   }
 
+  static String prettyJson(String jsonString) {
+    try {
+      final decoded = json.decode(jsonString);
+      const encoder = JsonEncoder.withIndent('  ');
+      return encoder.convert(decoded);
+    } catch (e) {
+      return jsonString; // If not valid JSON, return raw
+    }
+  }
+
   static Future<dynamic> callRemoteGetAPI({
     String? url,
     Map<String, String>? requestHeaders,
@@ -596,11 +608,12 @@ class AppSettings {
       printBlue("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
       final response = await http.get(uri, headers: customHeaders);
-
+      String formattedResponse = prettyJson(response.body);
       if (response.statusCode == 200) {
         printGreen("✅ API SUCCESS");
         printGreen("STATUS   : ${response.statusCode}");
-        printGreen("RESPONSE : ${response.body}");
+        printGreen("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        printGreen(formattedResponse);
         printGreen("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
         await saveData(
@@ -1169,8 +1182,6 @@ class AppSettings {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
   }
-
-  static void printGreen(String s) {}
 }
 
 class ApiConstants {
